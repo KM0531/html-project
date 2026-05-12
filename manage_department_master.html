@@ -1,0 +1,934 @@
+<!-- ★小林修正★ START -->
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>部署マスタ管理画面</title>
+    <!-- 小林修正★ START -->
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <!-- 小林修正★ END -->
+    <style>
+      :root {
+        --blue: #0078d4;
+        --blue-dark: #106ebe;
+        --sp-blue: #0078d4;
+        --line: #e1dfdd;
+        --bg: #f3f2f1;
+        --panel: #ffffff;
+        --text: #323130;
+        --muted: #605e5c;
+
+        --danger: #d13438;
+        --danger-bg: #fde7e9;
+        --danger-border: #f1bfc5;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+
+        background: var(--bg);
+        color: var(--text);
+      }
+      .header {
+        background: #fff;
+        border-bottom: 2px solid #222;
+        padding: 14px 24px;
+        font-weight: bold;
+      }
+      .header-list {
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .title {
+        font-size: 20px;
+        font-weight: bold;
+        margin: 16px;
+      }
+
+      .link {
+        color: var(--blue);
+        margin-left: 10px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      /* ボタン */
+      .btn {
+        border: 1px solid #c8c6c4;
+        background: #fff;
+        border-radius: 4px;
+        padding: 7px 12px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        background: #f8f8f8;
+      }
+
+      .btn.primary {
+        background: var(--blue);
+        color: #fff;
+        border-color: var(--blue);
+      }
+
+      .btn.primary:hover {
+        background: var(--blue-dark);
+      }
+
+      /* フィルタバー */
+
+      .toolbar {
+        margin: 0 20px 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 6px;
+
+        display: flex;
+        gap: 10px;
+      }
+
+      .input {
+        border: 1px solid #c8c6c4;
+        border-radius: 4px;
+        padding: 6px 8px;
+        font-size: 13px;
+      }
+
+      /* テーブル */
+      .table {
+        margin: 0 20px 20px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+      }
+
+      .table-header {
+        background: #f3f2f1;
+        padding: 10px 12px;
+        font-weight: 600;
+        display: grid;
+        grid-template-columns: 1fr 120px;
+      }
+
+      .row {
+        border-top: 1px solid var(--line);
+        padding: 10px 12px;
+        display: grid; /* ← 変更 */
+        grid-template-columns: 1fr 120px; /* ← 追加 */
+        align-items: center;
+      }
+
+      .row:hover {
+        background: #fafafa;
+      }
+
+      .left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .code {
+        font-size: 12px;
+        color: var(--muted);
+        margin-left: 6px;
+      }
+
+      /* 階層インデント */
+
+      .level-1 {
+        padding-left: 0px;
+      }
+      .level-2 {
+        padding-left: 24px;
+      }
+      .level-3 {
+        padding-left: 48px;
+      }
+      .level-4 {
+        padding-left: 72px;
+      }
+
+      /* 展開ボタン */
+
+      .toggle {
+        width: 20px;
+        height: 20px;
+
+        border: 1px solid #c8c6c4;
+        border-radius: 4px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      /* 操作ボタン */
+
+      .action-buttons {
+        display: flex;
+        gap: 6px;
+      }
+
+      .btn-small {
+        border: 1px solid #c8c6c4;
+        background: #fff;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      /* 編集ポップアップ */
+      /* モーダル背景 */
+
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+
+        width: 100%;
+        height: 100%;
+
+        background: rgba(0, 0, 0, 0.3);
+
+        display: none; /* ← 修正（ここ重要） */
+
+        align-items: center;
+        justify-content: center;
+
+        z-index: 1000;
+      }
+
+      .modal.show {
+        display: flex;
+      }
+
+      /* モーダル本体 */
+
+      .modal-content {
+        background: #fff;
+        padding: 20px;
+        border-radius: 6px;
+
+        width: 320px;
+
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      /* タイトル */
+
+      .modal-title {
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 14px;
+      }
+
+      /* 入力 */
+
+      .field {
+        margin-bottom: 12px;
+      }
+
+      .field label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .field input {
+        width: 100%;
+        padding: 6px;
+        margin-top: 4px;
+
+        border: 1px solid #c8c6c4;
+        border-radius: 4px;
+      }
+
+      /* タイトル */
+
+      .modal-title {
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 14px;
+      }
+
+      /* 入力 */
+
+      .field {
+        margin-bottom: 12px;
+      }
+
+      .field label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .field input {
+        width: 100%;
+        padding: 6px;
+        margin-top: 4px;
+
+        border: 1px solid #c8c6c4;
+        border-radius: 4px;
+      }
+
+      /* ボタン */
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .topbar {
+        background: var(--sp-blue);
+        color: #fff;
+        padding: 12px 18px;
+        font-weight: 700;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      }
+      .shell {
+        padding: 16px;
+      }
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">マスタ管理</div>
+    <div class="shell">
+      <div class="controls">
+        <div id="deptLabel">ログイン部店：経理部</div>
+        <div
+          style="
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+          "
+        >
+          <button class="btn sub" onclick="location.href = 'sp_main.html'">
+            ← 戻る
+          </button>
+          <button class="btn primary" onclick="openAdd()">＋ 部署を追加</button>
+        </div>
+      </div>
+
+      <!-- フィルタ -->
+      <div class="toolbar">
+        <input
+          class="input"
+          id="searchInput"
+          placeholder="部署名・コードで検索"
+          onkeydown="handleSearchKey(event)"
+        />
+        <button class="btn" onclick="searchDepartment()">検索</button>
+        <button class="btn" onclick="resetSearch()">リセット</button>
+        <!-- <button class="btn">全件ダウンロード ▼</button> -->
+      </div>
+
+      <!-- テーブル -->
+
+      <div class="table">
+        <div class="table-header">
+          <div>部署名</div>
+          <div>操作</div>
+        </div>
+
+        <!-- P001 -->
+        <div class="row level-1" data-id="P001">
+          <div class="left">
+            <div class="toggle" onclick="toggle('P001', this)">−</div>
+            <div>
+              調達部
+              <span class="code">P001</span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn-small edit-btn" onclick="openEdit(this)">
+              編集
+            </button>
+            <button class="btn-small" onclick="openDelete(this)">廃止</button>
+          </div>
+        </div>
+
+        <!-- P021 -->
+        <div class="row level-2" data-parent="P001">
+          <div class="left">
+            <div>
+              管理課
+              <span class="code">P021</span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn-small edit-btn" onclick="openEdit(this)">
+              編集
+            </button>
+            <button class="btn-small" onclick="openDelete(this)">廃止</button>
+          </div>
+        </div>
+
+        <!-- P011 -->
+        <div class="row level-2" data-parent="P001">
+          <div class="left">
+            <div>
+              購買課
+              <span class="code">P011</span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn-small edit-btn" onclick="openEdit(this)">
+              編集
+            </button>
+            <button class="btn-small" onclick="openDelete(this)">廃止</button>
+          </div>
+        </div>
+
+        <!-- S001 -->
+        <div class="row level-1" data-id="S001">
+          <div class="left">
+            <div class="toggle" onclick="toggle('S001', this)">−</div>
+            <div>
+              営業本部
+              <span class="code">S001</span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn-small edit-btn" onclick="openEdit(this)">
+              編集
+            </button>
+            <button class="btn-small" onclick="openDelete(this)">廃止</button>
+          </div>
+        </div>
+
+        <!-- S011 -->
+        <div class="row level-2" data-id="S011" data-parent="S001">
+          <div class="left">
+            <div class="toggle" onclick="toggle('S011', this)">−</div>
+            <div>
+              東日本グループ
+              <span class="code">S011</span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn-small edit-btn" onclick="openEdit(this)">
+              編集
+            </button>
+            <button class="btn-small" onclick="openDelete(this)">廃止</button>
+          </div>
+        </div>
+
+        <!-- S112 -->
+        <div class="row level-3" data-parent="S011">
+          <div class="left">
+            <div>
+              東北チーム
+              <span class="code">S112</span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn-small edit-btn" onclick="openEdit(this)">
+              編集
+            </button>
+            <button class="btn-small" onclick="openDelete(this)">廃止</button>
+          </div>
+        </div>
+
+        <!-- S111 -->
+        <div class="row level-3" data-id="S111" data-parent="S011">
+          <div class="left">
+            <div class="toggle" onclick="toggle('S111', this)">−</div>
+            <div>
+              関東チーム
+              <span class="code">S111</span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn-small edit-btn" onclick="openEdit(this)">
+              編集
+            </button>
+            <button class="btn-small" onclick="openDelete(this)">廃止</button>
+          </div>
+        </div>
+
+        <!-- 子 -->
+        <div class="row level-4" data-parent="S111">
+          <div class="left">
+            <div>渉外チーム</div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn-small edit-btn" onclick="openEdit(this)">
+              編集
+            </button>
+            <button class="btn-small" onclick="openDelete(this)">廃止</button>
+          </div>
+        </div>
+      </div>
+      <!-- 編集モーダル -->
+      <div id="editModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-title">部署編集</div>
+
+          <div class="field">
+            <label>部署名称</label>
+            <input type="text" id="editName" />
+          </div>
+
+          <div class="field">
+            <label>部署コード</label>
+            <input type="text" id="editCode" />
+          </div>
+
+          <div class="field hidden" id="parentField">
+            <label>上位部署コード（任意）</label>
+            <input type="text" id="parentCode" placeholder="例：S001" />
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn" onclick="closeModal()">キャンセル</button>
+
+            <button class="btn primary" onclick="saveEdit()">保存</button>
+          </div>
+        </div>
+      </div>
+      <!-- 削除確認モーダル -->
+      <div id="deleteModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-title">削除確認</div>
+
+          <div style="margin-bottom: 16px">
+            この部署を廃止します。<br />
+            配下に部署がある場合、それらの部署もすべて削除されます。<br />
+            よろしいですか？
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn" onclick="closeDeleteModal()">キャンセル</button>
+
+            <button class="btn primary" onclick="deleteDepartment()">
+              はい
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      let currentEditRow = null;
+
+      /* 編集画面を開く */
+
+      function openEdit(btn) {
+        isAddMode = false;
+        document.getElementById("parentField").classList.add("hidden");
+        document.getElementById("parentCode").value = "";
+        const row = btn.closest(".row");
+
+        currentEditRow = row;
+
+        const name = row
+          .querySelector(".left div:last-child")
+          .childNodes[0].textContent.trim();
+
+        const codeEl = row.querySelector(".code");
+
+        const code = codeEl ? codeEl.textContent : "";
+
+        document.getElementById("editName").value = name;
+
+        document.getElementById("editCode").value = code;
+
+        document.getElementById("editModal").classList.add("show"); /* ← 修正 */
+      }
+
+      let isAddMode = false;
+
+      /* 部署追加モード */
+      function openAdd() {
+        isAddMode = true;
+
+        currentEditRow = null;
+
+        document.getElementById("editName").value = "";
+        document.getElementById("editCode").value = "";
+        document.getElementById("parentCode").value = "";
+
+        /* ★追加：上位部署欄を表示 */
+        document.getElementById("parentField").classList.remove("hidden");
+
+        document.getElementById("editModal").classList.add("show");
+      }
+
+      /* 閉じる */
+
+      function closeModal() {
+        document
+          .getElementById("editModal")
+          .classList.remove("show"); /* ← 修正 */
+        document.getElementById("parentCode").value = "";
+      }
+
+      /* 保存 */
+
+      function saveEdit() {
+        const newName = document.getElementById("editName").value;
+
+        const newCode = document.getElementById("editCode").value;
+
+        const parentCode = document.getElementById("parentCode").value.trim();
+
+        /* ===== 追加モード ===== */
+
+        if (isAddMode) {
+          const table = document.querySelector(".table");
+
+          /* 親を探す */
+
+          let parentRow = null;
+
+          if (parentCode !== "") {
+            parentRow = document.querySelector(`[data-id="${parentCode}"]`);
+
+            if (!parentRow) {
+              alert("上位部署が存在しません");
+              return;
+            }
+          }
+
+          /* 階層計算 */
+
+          let level = 1;
+
+          if (parentRow) {
+            const parentLevel = parentRow.className.match(/level-(\d)/);
+
+            if (parentLevel) {
+              level = Number(parentLevel[1]) + 1;
+            }
+          }
+
+          /* 新規行作成 */
+
+          const newRow = document.createElement("div");
+
+          newRow.className = `row level-${level}`;
+
+          newRow.setAttribute("data-id", newCode);
+
+          if (parentRow) {
+            newRow.setAttribute("data-parent", parentCode);
+          }
+
+          newRow.innerHTML = `
+
+      <div class="left">
+
+        ${
+          parentRow
+            ? ""
+            : `<div class="toggle" onclick="toggle('${newCode}', this)">−</div>`
+        }
+
+        <div>
+          ${newName}
+          <span class="code">${newCode}</span>
+        </div>
+
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn-small"
+          onclick="openEdit(this)">
+          編集
+        </button>
+        <button class="btn-small" onclick="openDelete(this)">廃止</button>
+      </div>
+
+    `;
+
+          /* 挿入位置 */
+
+          if (parentRow) {
+            parentRow.after(newRow);
+          } else {
+            table.appendChild(newRow);
+          }
+
+          closeModal();
+
+          return;
+        }
+
+        /* ===== 編集モード ===== */
+
+        if (!currentEditRow) return;
+
+        const nameDiv = currentEditRow.querySelector(".left div:last-child");
+
+        nameDiv.firstChild.textContent = newName + " ";
+
+        let codeEl = currentEditRow.querySelector(".code");
+
+        if (codeEl) {
+          codeEl.textContent = newCode;
+        }
+
+        closeModal();
+      }
+      function toggle(id, btn) {
+        const isClosing = btn.textContent === "−";
+
+        const children = document.querySelectorAll(`[data-parent="${id}"]`);
+
+        btn.textContent = isClosing ? "+" : "−";
+
+        children.forEach((row) => {
+          if (isClosing) {
+            hideAllChildren(row);
+          } else {
+            row.classList.remove("hidden");
+          }
+        });
+      }
+
+      /* 子孫をすべて閉じる */
+      function hideAllChildren(row) {
+        row.classList.add("hidden");
+
+        const toggleBtn = row.querySelector(".toggle");
+
+        /* ← ここが重要 */
+        if (toggleBtn) {
+          toggleBtn.textContent = "+"; // 子の状態をリセット
+        }
+
+        const childId = row.dataset.id;
+
+        if (childId) {
+          const descendants = document.querySelectorAll(
+            `[data-parent="${childId}"]`,
+          );
+
+          descendants.forEach((el) => hideAllChildren(el));
+        }
+      }
+      function searchDepartment() {
+        const keyword = document
+          .getElementById("searchInput")
+          .value.toLowerCase()
+          .trim();
+
+        const rows = document.querySelectorAll(".row");
+
+        /* いったん全部非表示 */
+        rows.forEach((row) => {
+          row.classList.add("hidden");
+        });
+
+        /* 空検索なら全表示 */
+        if (keyword === "") {
+          rows.forEach((row) => {
+            row.classList.remove("hidden");
+          });
+
+          return;
+        }
+
+        /* ヒット処理 */
+        rows.forEach((row) => {
+          const text = row.textContent.toLowerCase();
+
+          if (text.includes(keyword)) {
+            showWithParents(row);
+
+            /* 子孫は閉じる */
+            const id = row.dataset.id;
+
+            if (id) {
+              closeChildren(id);
+            }
+          }
+        });
+      }
+
+      /* Enterキー検索対応 */
+      function handleSearchKey(event) {
+        if (event.key === "Enter") {
+          event.preventDefault(); // フォーム誤送信防止
+          searchDepartment();
+        }
+      }
+
+      function resetSearch() {
+        /* 検索文字クリア */
+        document.getElementById("searchInput").value = "";
+
+        const rows = document.querySelectorAll(".row");
+
+        /* 全行表示 */
+        rows.forEach((row) => {
+          row.classList.remove("hidden");
+        });
+
+        /* トグル状態初期化 */
+        const toggles = document.querySelectorAll(".toggle");
+
+        toggles.forEach((btn) => {
+          btn.textContent = "−";
+        });
+      }
+
+      /* 初期表示：第1階層のみ表示 */
+
+      function initializeTree() {
+        const rows = document.querySelectorAll(".row");
+
+        rows.forEach((row) => {
+          const parentId = row.dataset.parent;
+
+          /* 親がある行＝子階層は非表示 */
+          if (parentId) {
+            row.classList.add("hidden");
+          }
+        });
+
+        /* トグルはすべて「＋」に */
+        const toggles = document.querySelectorAll(".toggle");
+
+        toggles.forEach((btn) => {
+          btn.textContent = "+";
+        });
+      }
+
+      /* 親を順に表示 */
+
+      function showWithParents(row) {
+        row.classList.remove("hidden");
+
+        const parentId = row.dataset.parent;
+
+        if (parentId) {
+          const parentRow = document.querySelector(`[data-id="${parentId}"]`);
+
+          if (parentRow) {
+            showWithParents(parentRow);
+          }
+        }
+      }
+
+      /* 子孫を閉じる */
+
+      function closeChildren(id) {
+        const selfRow = document.querySelector(`[data-id="${id}"]`);
+
+        if (selfRow) {
+          const selfToggle = selfRow.querySelector(".toggle");
+
+          if (selfToggle) {
+            selfToggle.textContent = "+"; // ← 親も＋にする
+          }
+        }
+        const children = document.querySelectorAll(`[data-parent="${id}"]`);
+
+        children.forEach((child) => {
+          child.classList.add("hidden");
+
+          const toggleBtn = child.querySelector(".toggle");
+
+          if (toggleBtn) {
+            toggleBtn.textContent = "+"; // ← ここ重要
+          }
+
+          const childId = child.dataset.id;
+
+          if (childId) {
+            closeChildren(childId);
+          }
+        });
+      }
+      /* 初期化実行 */
+      window.onload = function () {
+        initializeTree();
+      };
+      /* 削除対象保持 */
+      let currentDeleteRow = null;
+
+      /* 削除モーダル表示 */
+
+      function openDelete(btn) {
+        const row = btn.closest(".row");
+
+        currentDeleteRow = row;
+
+        document.getElementById("deleteModal").classList.add("show");
+      }
+
+      /* モーダル閉じる */
+
+      function closeDeleteModal() {
+        document.getElementById("deleteModal").classList.remove("show");
+      }
+
+      /* 部署削除 */
+
+      function deleteDepartment() {
+        if (!currentDeleteRow) return;
+
+        deleteWithChildren(currentDeleteRow);
+
+        closeDeleteModal();
+      }
+
+      /* 子孫含めて削除 */
+
+      function deleteWithChildren(row) {
+        const id = row.dataset.id;
+
+        /* 子を先に削除 */
+
+        if (id) {
+          const children = document.querySelectorAll(`[data-parent="${id}"]`);
+
+          children.forEach((child) => {
+            deleteWithChildren(child);
+          });
+        }
+
+        /* 自分削除 */
+
+        row.remove();
+      }
+    </script>
+  </body>
+</html>
+<!-- ★小林修正★ END -->

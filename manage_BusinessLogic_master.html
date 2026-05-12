@@ -1,0 +1,2196 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>業務ロジックマスタ管理</title>
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <style>
+      /* =====================================================
+         CSS変数定義（色・サイズの統一管理）
+         ここを変更すると画面全体の見た目が変わります
+      ===================================================== */
+      :root {
+        --blue: #0078d4;
+        --blue-dark: #106ebe;
+        --blue-light: #deecf9;
+        --line: #e1dfdd;
+        --bg: #f3f2f1;
+        --panel: #ffffff;
+        --text: #323130;
+        --muted: #605e5c;
+        --danger: #d13438;
+        --danger-bg: #fde7e9;
+        --success: #107c10;
+        --success-bg: #dff6dd;
+        --warning: #797673;
+        --sp-blue: #0078d4;
+      }
+
+      /* =====================================================
+         基本スタイル（全体共通）
+      ===================================================== */
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 14px;
+      }
+
+      /* =====================================================
+         ヘッダー（画面最上部の青いバー）
+      ===================================================== */
+      .topbar {
+        background: var(--sp-blue);
+        color: #fff;
+        padding: 12px 18px;
+        font-weight: 700;
+        font-size: 15px;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      }
+
+      /* =====================================================
+         メインコンテンツ領域
+      ===================================================== */
+      .shell {
+        padding: 16px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      /* =====================================================
+         操作バー（戻るボタン・追加ボタンなど）
+      ===================================================== */
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: #666;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      /* =====================================================
+         ボタン共通スタイル
+      ===================================================== */
+      .btn {
+        border: 1px solid #c8c6c4;
+        background: #fff;
+        border-radius: 4px;
+        padding: 7px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover {
+        background: #f3f2f1;
+      }
+
+      /* プライマリボタン（青色・主要操作） */
+      .btn.primary {
+        background: var(--blue);
+        color: #fff;
+        border-color: var(--blue);
+      }
+      .btn.primary:hover {
+        background: var(--blue-dark);
+      }
+
+      /* 危険操作ボタン（赤色・削除など） */
+      .btn.danger {
+        background: var(--danger);
+        color: #fff;
+        border-color: var(--danger);
+      }
+      .btn.danger:hover {
+        background: #a4262c;
+      }
+
+      /* 小さいボタン（テーブル内の操作） */
+      .btn-small {
+        border: 1px solid #c8c6c4;
+        background: #fff;
+        border-radius: 4px;
+        padding: 4px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.15s;
+        white-space: nowrap;
+      }
+      .btn-small:hover {
+        background: #f3f2f1;
+      }
+      .btn-small.danger {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+      .btn-small.danger:hover {
+        background: var(--danger-bg);
+      }
+      .btn-small.primary {
+        color: var(--blue);
+        border-color: var(--blue);
+      }
+      .btn-small.primary:hover {
+        background: var(--blue-light);
+      }
+
+      /* =====================================================
+         検索バー（フィルタ機能）
+      ===================================================== */
+      .toolbar {
+        margin-bottom: 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 6px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .input {
+        border: 1px solid #c8c6c4;
+        border-radius: 4px;
+        padding: 6px 10px;
+        font-size: 13px;
+        min-width: 200px;
+      }
+      .input:focus {
+        outline: none;
+        border-color: var(--blue);
+        box-shadow: 0 0 0 2px var(--blue-light);
+      }
+
+      /* =====================================================
+         件数表示ラベル
+      ===================================================== */
+      .result-count {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      /* =====================================================
+         テーブル（一覧表示）
+      ===================================================== */
+      .table-wrap {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        overflow-x: auto; /* 横スクロール対応 */
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      /* テーブルヘッダー */
+      thead tr {
+        background: #f3f2f1;
+      }
+      thead th {
+        padding: 10px 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+
+      /* テーブル行 */
+      tbody tr {
+        border-bottom: 1px solid var(--line);
+        transition: background 0.1s;
+      }
+      tbody tr:hover {
+        background: #fafafa;
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+
+      /* テーブルセル */
+      td {
+        padding: 10px 12px;
+        vertical-align: middle;
+      }
+
+      /* ロジックコード（等幅フォント） */
+      .code-cell {
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      /* ロジック式（長い場合は省略表示） */
+      .logic-cell {
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 12px;
+        color: #333;
+        max-width: 280px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: pointer;
+        background: #f8f7f6;
+        padding: 3px 6px !important;
+        border-radius: 3px;
+      }
+      .logic-cell:hover {
+        background: var(--blue-light);
+        color: var(--blue);
+      }
+
+      /* 操作ボタン列 */
+      .actions-cell {
+        display: flex;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      /* データなし表示 */
+      .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      /* =====================================================
+         モーダル共通スタイル（ポップアップウィンドウ）
+      ===================================================== */
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.35);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 16px;
+      }
+      .modal.show {
+        display: flex;
+      }
+
+      .modal-content {
+        width: min(1500px, 96vw);
+        max-height: 92vh;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        overflow: hidden;
+        background: #ffffff; /* ←追加 */
+        border-radius: 12px; /* ←必要なら */
+      }
+
+      .modal-title {
+        padding: 20px 24px 0;
+        flex-shrink: 0;
+      }
+
+      .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+      }
+      .logic-layout {
+        display: grid;
+        grid-template-columns: 320px 1fr 360px;
+        gap: 20px;
+        align-items: start;
+      }
+      .logic-pane {
+        min-width: 0;
+      }
+
+      .logic-pane-left {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .logic-pane-center {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .logic-pane-right {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .data-source-box {
+        margin-top: 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fafafa;
+      }
+
+      .data-source-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .data-source-row {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+      }
+
+      .data-source-item {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .data-source-item label {
+        display: block;
+        font-size: 11px;
+        margin-bottom: 4px;
+      }
+
+      .insert-btn {
+        height: 32px;
+        padding: 0 14px;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+
+      /* =====================================================
+         フォームフィールド（入力欄）
+      ===================================================== */
+      .field {
+        margin-bottom: 16px;
+      }
+
+      .field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+
+      /* 必須マーク */
+      .field label .required {
+        color: var(--danger);
+        margin-left: 3px;
+      }
+
+      .field input,
+      .field textarea,
+      .field select {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #c8c6c4;
+        border-radius: 4px;
+        font-size: 13px;
+        font-family: inherit;
+        transition: border 0.15s;
+      }
+      .field input:focus,
+      .field textarea:focus,
+      .field select:focus {
+        outline: none;
+        border-color: var(--blue);
+        box-shadow: 0 0 0 2px var(--blue-light);
+      }
+
+      /* ロジック入力欄（等幅フォント） */
+      .field textarea.logic-input {
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 13px;
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      /* ヒントテキスト */
+      .field-hint {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+        line-height: 1.5;
+      }
+
+      /* モーダルの操作ボタン行 */
+      .modal-actions {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 16px 24px 20px;
+        background: #fff;
+        border-top: none; /* ← グレー線削除 */
+      }
+
+      /* =====================================================
+         Excel関数ヘルパー（関数候補ボタン）
+         ITリテラシーが低いユーザー向けの補助機能
+      ===================================================== */
+      .func-helper {
+        background: #f8f7f6;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px;
+        margin-top: 8px;
+      }
+      .func-helper-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .func-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      /* 関数候補ボタン（クリックで入力欄に挿入） */
+      .func-btn {
+        background: #fff;
+        border: 1px solid #c8c6c4;
+        border-radius: 3px;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-family: "Consolas", "Courier New", monospace;
+        cursor: pointer;
+        transition: all 0.1s;
+        color: var(--blue);
+      }
+      .func-btn:hover {
+        background: var(--blue);
+        color: #fff;
+        border-color: var(--blue);
+      }
+
+      /* =====================================================
+         詳細表示モーダル
+      ===================================================== */
+      .detail-row {
+        display: flex;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+      }
+      .detail-row:last-child {
+        border-bottom: none;
+      }
+      .detail-label {
+        font-weight: 600;
+        color: var(--muted);
+        min-width: 120px;
+        font-size: 12px;
+      }
+      .detail-value {
+        flex: 1;
+        word-break: break-all;
+      }
+      .detail-value.mono {
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 12px;
+        background: #f8f7f6;
+        padding: 6px 8px;
+        border-radius: 4px;
+        white-space: pre-wrap;
+      }
+
+      /* =====================================================
+         削除確認モーダル（赤いアクセント）
+      ===================================================== */
+      .delete-warning {
+        background: var(--danger-bg);
+        border: 1px solid #f1bfc5;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .delete-warning strong {
+        color: var(--danger);
+      }
+
+      /* =====================================================
+         トースト通知（操作完了メッセージ）
+      ===================================================== */
+      #toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: #323130;
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 6px;
+        font-size: 13px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s;
+        z-index: 9999;
+        pointer-events: none;
+      }
+      #toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      #toast.success {
+        background: var(--success);
+      }
+      #toast.danger {
+        background: var(--danger);
+      }
+
+      /* =====================================================
+         ページネーション（ページ移動）
+      ===================================================== */
+      .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      /* レスポンシブ対応（画面が狭い場合） */
+      @media (max-width: 600px) {
+        .logic-cell {
+          max-width: 120px;
+        }
+        .modal-content {
+          padding: 16px;
+        }
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 20px;
+        align-items: start;
+      }
+
+      .left-panel,
+      .right-panel {
+        min-width: 0;
+      }
+
+      .panel-box {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 14px;
+        background: #fff;
+      }
+
+      .panel-title {
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      /* レスポンシブ */
+      @media (max-width: 900px) {
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .right-panel {
+        max-height: 75vh;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+      /*
+      .modal-content {
+        width: 95vw;
+        max-width: 1800px;
+        max-height: 92vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      */
+
+      .modal-grid {
+        display: grid;
+        grid-template-columns: 280px 1fr 340px;
+        gap: 20px;
+        align-items: start;
+
+        /* ★追加 */
+        min-height: 0;
+      }
+
+      .modal-pane {
+        padding-right: 4px;
+      }
+
+      .logic-input {
+        min-height: 180px;
+        resize: vertical;
+      }
+
+      .variable-box {
+        margin-top: 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fafafa;
+      }
+
+      /* タイトル＋挿入ボタン */
+      .variable-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      /* プルダウン縦並び */
+      .variable-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      /* ラベル位置統一 */
+      .variable-field label {
+        display: block;
+        font-size: 11px;
+        margin-bottom: 4px;
+      }
+
+      /* 挿入ボタン */
+      .variable-insert-btn {
+        min-width: auto;
+        height: auto;
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      #testInputFields input {
+        width: 100%;
+        min-width: 260px;
+      }
+      @media (max-width: 1200px) {
+        .logic-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- =====================================================
+         ヘッダーバー
+    ===================================================== -->
+    <div class="topbar">マスタ管理</div>
+
+    <!-- =====================================================
+         メインコンテンツ
+    ===================================================== -->
+    <div class="shell">
+      <!-- 操作バー（ログイン情報・ボタン群） -->
+      <div class="controls">
+        <div id="deptLabel">ログイン部店：経理部</div>
+        <div
+          style="
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+          "
+        >
+          <button class="btn" onclick="location.href = 'sp_main.html'">
+            ← 戻る
+          </button>
+          <button class="btn primary" onclick="openAdd()">
+            ＋ 業務ロジックを追加
+          </button>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           検索フィルタバー
+           業務ロジックコード・業務名・ファイル名で検索できます
+      ===================================================== -->
+      <div class="toolbar">
+        <input
+          class="input"
+          id="searchInput"
+          placeholder="業務ロジックコード・業務名・ファイル名で検索"
+          style="flex: 1"
+          onkeydown="handleSearchKey(event)"
+          oninput="searchLogic()"
+        />
+        <button class="btn" onclick="searchLogic()">検索</button>
+        <button class="btn" onclick="resetSearch()">リセット</button>
+      </div>
+
+      <!-- 検索結果件数 -->
+      <div class="result-count" id="resultCount">
+        全 <span id="countNum">0</span> 件
+      </div>
+
+      <!-- =====================================================
+           業務ロジック一覧テーブル
+           登録済みの業務ロジックをここに表示します
+      ===================================================== -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>業務ロジックコード</th>
+              <th>業務名</th>
+              <th>処理ロジック（式）</th>
+              <th>使用ファイル名</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <!-- テーブルの中身はJavaScriptで動的に生成します -->
+          <tbody id="tableBody"></tbody>
+        </table>
+        <!-- データがない場合のメッセージ -->
+        <div id="emptyState" class="empty-state" style="display: none">
+          <div style="font-size: 32px; margin-bottom: 8px">📋</div>
+          <div>該当するデータがありません</div>
+          <div style="font-size: 11px; margin-top: 4px">
+            検索条件を変えるか、新しいロジックを追加してください
+          </div>
+        </div>
+      </div>
+
+      <!-- ページ件数表示 -->
+      <div class="pagination" id="paginationArea"></div>
+    </div>
+
+    <!-- =====================================================
+         【モーダル①】新規追加 / 編集 フォーム
+         業務ロジックの登録・更新を行います
+    ===================================================== -->
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-title" id="modalTitle">業務ロジック追加</div>
+        <div class="modal-body">
+          <!-- =====================================================
+          3ペインレイアウト
+      ===================================================== -->
+          <div class="logic-layout">
+            <!-- =====================================================
+            左ペイン
+        ===================================================== -->
+            <div class="logic-pane logic-pane-left">
+              <!-- 業務ロジックコード -->
+              <div class="field">
+                <label
+                  >業務ロジックコード <span class="required">*必須</span></label
+                >
+
+                <input
+                  type="text"
+                  id="fCode"
+                  placeholder="例：GL-001"
+                  maxlength="20"
+                />
+
+                <div class="field-hint">
+                  半角英数字・ハイフン。例：GL-001、AP-023
+                </div>
+              </div>
+
+              <!-- 業務名 -->
+              <div class="field">
+                <label>業務名 <span class="required">*必須</span></label>
+
+                <input
+                  type="text"
+                  id="fName"
+                  placeholder="例：売上消費税計算"
+                  maxlength="50"
+                />
+              </div>
+
+              <!-- 使用ファイル名 -->
+              <div class="field">
+                <label>使用ファイル名</label>
+
+                <div id="fileInputArea"></div>
+
+                <div style="display: flex; gap: 8px; margin-top: 8px">
+                  <button
+                    type="button"
+                    class="btn-small primary"
+                    onclick="addFileInput()"
+                  >
+                    追加
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-small danger"
+                    onclick="removeFileInput()"
+                  >
+                    削除
+                  </button>
+                </div>
+
+                <div class="field-hint">
+                  使用するExcelファイル名を入力してください。
+                </div>
+              </div>
+            </div>
+
+            <!-- =====================================================
+            真ん中ペイン
+        ===================================================== -->
+            <div class="logic-pane logic-pane-center">
+              <!-- 処理ロジック -->
+              <div class="field">
+                <label>
+                  処理ロジック
+                  <span class="required">*必須</span>
+                </label>
+
+                <textarea
+                  class="logic-input"
+                  id="fLogic"
+                  rows="6"
+                  placeholder="例：IF({{売上データ.売上金額}}>=0,ROUND({{売上データ.売上金額}}*0.1,0),0)"
+                  oninput="handleLogicChange()"
+                ></textarea>
+
+                <div class="field-hint">
+                  ⚠️「{{データソース名.項目名}}」の形式で指定してください。<br />
+                  例：{{売上データ.売上金額}}
+                </div>
+              </div>
+
+              <!-- =====================================================
+              データ項目挿入
+          ===================================================== -->
+              <div class="data-source-box">
+                <div class="data-source-header">
+                  <div style="font-size: 12px; font-weight: 600">
+                    データ項目挿入
+                  </div>
+
+                  <button
+                    type="button"
+                    class="btn-small primary insert-btn"
+                    onclick="insertVariable()"
+                  >
+                    挿入
+                  </button>
+                </div>
+
+                <div class="data-source-row">
+                  <!-- 使用ファイル -->
+                  <div class="data-source-item">
+                    <label style="font-size: 11px">使用ファイル</label>
+                    <select
+                      id="sourceFileSelect"
+                      class="input"
+                      onchange="loadColumns()"
+                    >
+                      <option value="">選択してください</option>
+                    </select>
+                  </div>
+
+                  <!-- 項目 -->
+                  <div class="data-source-item">
+                    <label style="font-size: 11px">項目名</label>
+                    <select id="columnSelect" class="input">
+                      <option value="">選択してください</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- 使用中変数 -->
+                <div
+                  id="usedVariablesArea"
+                  style="margin-top: 14px; display: none"
+                >
+                  <div
+                    style="
+                      font-size: 11px;
+                      font-weight: 600;
+                      margin-bottom: 6px;
+                      color: var(--muted);
+                    "
+                  >
+                    使用中の変数
+                  </div>
+
+                  <div
+                    id="usedVariablesList"
+                    style="display: flex; flex-wrap: wrap; gap: 6px"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- =====================================================
+              関数ヘルパー
+          ===================================================== -->
+              <div class="func-helper" style="margin-top: 16px">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+                    gap: 8px;
+                  "
+                >
+                  <div class="func-helper-title" style="margin-bottom: 0">
+                    📌 よく使う関数
+                  </div>
+
+                  <button
+                    type="button"
+                    class="btn-small primary"
+                    onclick="openFuncHelpModal()"
+                  >
+                    関数説明
+                  </button>
+                </div>
+
+                <div class="func-buttons">
+                  <button class="func-btn" onclick="insertFunc('+')">＋</button>
+                  <button class="func-btn" onclick="insertFunc('-')">−</button>
+                  <button class="func-btn" onclick="insertFunc('*')">×</button>
+                  <button class="func-btn" onclick="insertFunc('/')">÷</button>
+
+                  <button
+                    class="func-btn"
+                    onclick="insertFunc('IF(条件,真の値,偽の値)')"
+                  >
+                    IF
+                  </button>
+
+                  <button
+                    class="func-btn"
+                    onclick="insertFunc('SUM(数値1,数値2)')"
+                  >
+                    SUM
+                  </button>
+
+                  <button
+                    class="func-btn"
+                    onclick="insertFunc('ROUND(数値,桁数)')"
+                  >
+                    ROUND
+                  </button>
+
+                  <button class="func-btn" onclick="insertFunc('ABS(値)')">
+                    ABS
+                  </button>
+
+                  <button
+                    class="func-btn"
+                    onclick="insertFunc('IFERROR(数式,エラー時の値)')"
+                  >
+                    IFERROR
+                  </button>
+
+                  <button
+                    class="func-btn"
+                    onclick="insertFunc('AND(条件1,条件2)')"
+                  >
+                    AND
+                  </button>
+
+                  <button
+                    class="func-btn"
+                    onclick="insertFunc('OR(条件1,条件2)')"
+                  >
+                    OR
+                  </button>
+
+                  <button
+                    class="func-btn"
+                    onclick="insertFunc('CONCAT(文字列1,文字列2)')"
+                  >
+                    CONCAT
+                  </button>
+
+                  <button
+                    class="func-btn"
+                    onclick="insertFunc('TEXT(値,&quot;#,##0&quot;)')"
+                  >
+                    TEXT
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- =====================================================
+            右ペイン
+        ===================================================== -->
+            <div class="logic-pane logic-pane-right">
+              <!-- テストデータ -->
+              <div
+                id="testDataArea"
+                style="
+                  padding: 12px;
+                  border: 1px solid var(--line);
+                  border-radius: 6px;
+                  background: #ffffff;
+                  display: none;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 10px;
+                    gap: 12px;
+                  "
+                >
+                  <div style="font-weight: 600">テストデータ入力</div>
+
+                  <button
+                    type="button"
+                    class="btn-small primary"
+                    onclick="testLogic()"
+                  >
+                    テスト実行
+                  </button>
+                </div>
+
+                <div id="testInputFields"></div>
+              </div>
+
+              <!-- テスト結果 -->
+              <div
+                id="testResultArea"
+                style="
+                  margin-top: 12px;
+                  padding: 12px;
+                  border: 1px solid var(--line);
+                  border-radius: 6px;
+                  background: #fafafa;
+                  display: none;
+                "
+              ></div>
+            </div>
+          </div>
+          <!-- =====================================================
+          モーダル下部ボタン
+      ===================================================== -->
+        </div>
+        <div class="modal-actions">
+          <button class="btn" onclick="closeEditModal()">キャンセル</button>
+
+          <button class="btn primary" onclick="saveLogic()">保存</button>
+        </div>
+      </div>
+    </div>
+    <!-- =====================================================
+         【モーダル②】詳細表示
+         業務ロジックの全情報を確認できます
+    ===================================================== -->
+    <div id="detailModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-title">業務ロジック詳細</div>
+        <!-- 詳細情報はJavaScriptで動的に生成します -->
+        <div id="detailBody"></div>
+        <div class="modal-actions">
+          <button class="btn" onclick="closeDetailModal()">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         【モーダル③】削除確認
+         誤操作防止のため、削除前に確認メッセージを表示します
+    ===================================================== -->
+    <div id="deleteModal" class="modal">
+      <div class="modal-content" style="max-width: 420px">
+        <div class="modal-title" style="border-color: var(--danger)">
+          削除確認
+        </div>
+        <div class="delete-warning">
+          以下の業務ロジックを<strong>削除</strong>します。<br />
+          削除すると元に戻せません。本当によろしいですか？
+        </div>
+        <!-- 削除対象の情報 -->
+        <div style="font-size: 13px; margin-bottom: 8px">
+          <span style="color: var(--muted); font-size: 12px">コード：</span>
+          <strong id="deleteTargetCode"></strong>
+        </div>
+        <div style="font-size: 13px">
+          <span style="color: var(--muted); font-size: 12px">業務名：</span>
+          <strong id="deleteTargetName"></strong>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" onclick="closeDeleteModal()">キャンセル</button>
+          <button class="btn danger" onclick="doDelete()">削除する</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- トースト通知（操作完了メッセージ） -->
+    <div id="toast"></div>
+
+    <!-- ★追加 START -->
+    <!-- =====================================================
+         【モーダル④】Excel関数説明
+         ===================================================== -->
+    <div id="funcHelpModal" class="modal">
+      <div class="modal-content" style="max-width: 900px">
+        <div class="modal-title">Excel関数説明</div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>関数</th>
+                <th>用途</th>
+                <th>記述例</th>
+                <th>説明</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td class="code-cell">IF</td>
+                <td>条件分岐</td>
+                <td class="code-cell">
+                  IF({{売上仕訳データ.xlsx.売上金額}}>0,"OK","NG")
+                </td>
+                <td>条件によって返却値を切り替えます</td>
+              </tr>
+
+              <tr>
+                <td class="code-cell">AND</td>
+                <td>複数条件</td>
+                <td class="code-cell">
+                  AND({{売上仕訳データ.xlsx.税率}}>0,
+                  {{売上仕訳データ.xlsx.売上金額}}>1000)
+                </td>
+                <td>すべての条件がTRUEの場合TRUE</td>
+              </tr>
+
+              <tr>
+                <td class="code-cell">OR</td>
+                <td>いずれか条件</td>
+                <td class="code-cell">
+                  OR({{売上仕訳データ.xlsx.税率}}=8,
+                  {{売上仕訳データ.xlsx.税率}}=10)
+                </td>
+                <td>いずれかの条件がTRUEならTRUE</td>
+              </tr>
+
+              <tr>
+                <td class="code-cell">IFERROR</td>
+                <td>エラー制御</td>
+                <td class="code-cell">
+                  IFERROR({{売上仕訳データ.xlsx.税率}},0)
+                </td>
+                <td>エラー時に代替値を返却</td>
+              </tr>
+
+              <tr>
+                <td class="code-cell">ROUND</td>
+                <td>四捨五入</td>
+                <td class="code-cell">
+                  ROUND({{売上仕訳データ.xlsx.売上金額}}*0.1,0)
+                </td>
+                <td>指定桁で四捨五入</td>
+              </tr>
+
+              <tr>
+                <td class="code-cell">ABS</td>
+                <td>絶対値</td>
+                <td class="code-cell">ABS({{売上仕訳データ.xlsx.差額}})</td>
+                <td>負数を正数へ変換</td>
+              </tr>
+
+              <tr>
+                <td class="code-cell">CONCAT</td>
+                <td>文字列連結</td>
+                <td class="code-cell">
+                  CONCAT({{売上仕訳データ.xlsx.部門}},
+                  {{売上仕訳データ.xlsx.取引先}})
+                </td>
+                <td>文字列を結合</td>
+              </tr>
+
+              <tr>
+                <td class="code-cell">LEN</td>
+                <td>文字数取得</td>
+                <td class="code-cell">
+                  LEN({{売上仕訳データ.xlsx.取引先コード}})
+                </td>
+                <td>文字数を取得</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" onclick="closeFuncHelpModal()">閉じる</button>
+        </div>
+      </div>
+    </div>
+    <!-- ★追加 END -->
+
+    <!-- =====================================================
+         JavaScript（画面の動作制御）
+    ===================================================== -->
+    <script>
+      /* =====================================================
+         初期データ（サンプルデータ）
+         実際の運用では、データベースや外部ファイルから取得します
+        ===================================================== */
+      let logicData = [
+        {
+          id: 1,
+          code: "GL-001",
+          name: "売上消費税計算",
+          logic:
+            "IF({{売上データ.売上金額}}>=0,ROUND({{売上データ.売上金額}}*0.1,0),0)",
+          file: "売上仕訳データ.xlsx",
+        },
+        {
+          id: 2,
+          code: "GL-002",
+          name: "仕入消費税計算",
+          logic: "=IF(D2>=0,ROUNDDOWN(D2*0.1,0),0)",
+          file: "仕入仕訳データ.xlsx",
+        },
+        {
+          id: 3,
+          code: "AP-001",
+          name: "支払額確定",
+          logic: '=IF(AND(E2>0,F2="承認"),E2,0)',
+          file: "支払管理表.xlsx",
+        },
+        {
+          id: 4,
+          code: "AP-002",
+          name: "振込手数料控除",
+          logic: "=IF(C2>=30000,C2-440,C2-220)",
+          file: "支払管理表.xlsx",
+        },
+        {
+          id: 5,
+          code: "AR-001",
+          name: "売掛残高計算",
+          logic: "=IFERROR(VLOOKUP(A2,請求書!A:F,6,0),0)",
+          file: "売掛金管理.xlsx",
+        },
+        {
+          id: 6,
+          code: "CR-001",
+          name: "為替換算（ドル→円）",
+          logic: '=ROUND(B2*VLOOKUP("USD",為替レート!A:B,2,0),0)',
+          file: "外貨建取引管理.xlsx",
+        },
+      ];
+      /* =====================================================
+         DBに格納されているファイル一覧（モック）
+         ===================================================== */
+      const dbFiles = [
+        "売上仕訳データ.xlsx",
+        "仕入仕訳データ.xlsx",
+        "支払管理表.xlsx",
+        "売掛金管理.xlsx",
+        "外貨建取引管理.xlsx",
+        "税率マスタ.xlsx",
+        "顧客マスタ.xlsx",
+      ];
+      /* =====================================================
+          ファイル → データソース → 項目定義（モック）
+         ===================================================== */
+      const dataSourceDefinitions = {
+        "売上仕訳データ.xlsx": ["売上金額", "税率", "取引先コード", "取引日"],
+
+        "支払管理表.xlsx": ["支払金額", "承認フラグ", "支払日"],
+
+        "税率マスタ.xlsx": ["税区分", "税率"],
+      };
+      /* 削除対象のID（削除確認モーダルで使用） */
+      let deleteTargetId = null;
+      /* 編集対象のID（編集モーダルで使用） */
+      let editTargetId = null;
+      /* 新規IDの最大値（自動採番用） */
+      let nextId = Math.max(...logicData.map((d) => d.id)) + 1;
+
+      /* =====================================================
+                                       画面の初期表示処理
+                                       ページを開いたときに一覧を描画します
+                                    ===================================================== */
+      window.onload = function () {
+        renderTable(logicData);
+        /* 初期3件 */
+        addFileInput();
+        addFileInput();
+        addFileInput();
+        refreshSourceFileSelect();
+      };
+
+      /* =====================================================
+                                       テーブル描画処理
+                                       配列データを受け取ってテーブルのHTML行を生成します
+                                       @param {Array} data - 表示するデータ配列
+                                    ===================================================== */
+      function renderTable(data) {
+        const tbody = document.getElementById("tableBody");
+        const emptyState = document.getElementById("emptyState");
+        const countNum = document.getElementById("countNum");
+
+        /* 件数を更新 */
+        countNum.textContent = data.length;
+
+        /* データがない場合は「データなし」メッセージを表示 */
+        if (data.length === 0) {
+          tbody.innerHTML = "";
+          emptyState.style.display = "block";
+          return;
+        }
+        emptyState.style.display = "none";
+
+        /* 各行のHTMLを生成 */
+        tbody.innerHTML = data
+          .map(
+            (item) => `
+                                        <tr data-id="${item.id}">
+                                          <!-- 業務ロジックコード（等幅フォント） -->
+                                          <td class="code-cell">${escapeHtml(item.code)}</td>
+                                          <!-- 業務名 -->
+                                          <td>${escapeHtml(item.name)}</td>
+                                          <!-- 処理ロジック（クリックで全文表示） -->
+                                          <td>
+                                            <div class="logic-cell" title="${escapeHtml(item.logic)}"
+                                              onclick="openDetail(${item.id})">
+                                              ${escapeHtml(item.logic)}
+                                            </div>
+                                          </td>
+                                          <!-- 使用ファイル名 -->
+                                          <td>
+                                            ${
+                                              Array.isArray(item.file)
+                                                ? escapeHtml(
+                                                    item.file.join(", "),
+                                                  )
+                                                : escapeHtml(item.file || "—")
+                                            }
+                                          </td>
+                                          <!-- 操作ボタン -->
+                                          <td>
+                                            <div class="actions-cell">
+                                              <button class="btn-small primary" onclick="openDetail(${item.id})">詳細</button>
+                                              <button class="btn-small" onclick="openEdit(${item.id})">編集</button>
+                                              <button class="btn-small danger" onclick="openDelete(${item.id})">削除</button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      `,
+          )
+          .join("");
+      }
+
+      /* =====================================================
+                                       検索処理
+                                       入力キーワードでリアルタイムに絞り込みます
+                                       コード・業務名・ファイル名を検索対象にします
+                                    ===================================================== */
+      function searchLogic() {
+        const keyword = document
+          .getElementById("searchInput")
+          .value.toLowerCase()
+          .trim();
+
+        /* キーワードが空なら全件表示 */
+        if (keyword === "") {
+          renderTable(logicData);
+          return;
+        }
+
+        /* キーワードが含まれる行だけを抽出 */
+        const filtered = logicData.filter(
+          (item) =>
+            item.code.toLowerCase().includes(keyword) ||
+            item.name.toLowerCase().includes(keyword) ||
+            (Array.isArray(item.file)
+              ? item.file.join(",").toLowerCase()
+              : (item.file || "").toLowerCase()
+            ).includes(keyword),
+        );
+
+        renderTable(filtered);
+      }
+
+      /* Enterキーで検索を実行 */
+      function handleSearchKey(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          searchLogic();
+        }
+      }
+
+      /* 検索リセット（全件表示に戻す） */
+      function resetSearch() {
+        document.getElementById("searchInput").value = "";
+        renderTable(logicData);
+      }
+
+      /* =====================================================
+                                       新規追加モーダルを開く
+                                       フォームを空にして追加モードで表示します
+                                    ===================================================== */
+      function openAdd() {
+        editTargetId = null; /* 新規追加モードのためnullにする */
+        document.getElementById("modalTitle").textContent = "業務ロジック追加";
+        clearForm();
+        document.getElementById("editModal").classList.add("show");
+        /* 最初の入力欄にフォーカス */
+        setTimeout(() => document.getElementById("fCode").focus(), 100);
+      }
+
+      /* =====================================================
+         編集モーダルを開く
+         対象データをフォームに事前入力して表示します
+         @param {number} id - 編集対象のID
+         ===================================================== */
+      function openEdit(id) {
+        const item = logicData.find((d) => d.id === id);
+        if (!item) return;
+        editTargetId = id;
+        document.getElementById("modalTitle").textContent = "業務ロジック編集";
+        document.getElementById("fCode").value = item.code;
+        document.getElementById("fName").value = item.name;
+        document.getElementById("fLogic").value = item.logic;
+        const area = document.getElementById("fileInputArea");
+        area.innerHTML = "";
+        fileInputCount = 0;
+        const files = Array.isArray(item.file) ? item.file : [item.file];
+        if (files.length === 0) {
+          addFileInput();
+        } else {
+          files.forEach((f) => {
+            addFileInput(f);
+          });
+        }
+        refreshSourceFileSelect();
+        handleLogicChange();
+        document.getElementById("editModal").classList.add("show");
+
+        setTimeout(() => {
+          document.getElementById("fName").focus();
+        }, 100);
+      }
+
+      /* 編集モーダルを閉じる */
+      function closeEditModal() {
+        document.getElementById("editModal").classList.remove("show");
+        clearForm();
+      }
+
+      /* =====================================================
+   使用ファイル入力欄生成
+===================================================== */
+
+      let fileInputCount = 0;
+
+      function addFileInput(value = "") {
+        fileInputCount++;
+
+        const area = document.getElementById("fileInputArea");
+
+        const div = document.createElement("div");
+
+        div.style.marginBottom = "8px";
+
+        div.id = `fileRow_${fileInputCount}`;
+
+        div.innerHTML = `
+          <select
+            class="input file-input"
+            onchange="refreshSourceFileSelect()"
+          >
+            <option value="">選択してください</option>
+
+            ${dbFiles
+              .map(
+                (file) => `
+                  <option
+                    value="${escapeHtml(file)}"
+                    ${file === value ? "selected" : ""}
+                  >
+                    ${escapeHtml(file)}
+                  </option>
+                `,
+              )
+              .join("")}
+          </select>
+        `;
+
+        area.appendChild(div);
+      }
+
+      function removeFileInput() {
+        const area = document.getElementById("fileInputArea");
+
+        /* 最低1件は残す */
+        if (area.children.length <= 1) {
+          return;
+        }
+        area.removeChild(area.lastElementChild);
+        refreshSourceFileSelect();
+      }
+      /* フォームの入力値をクリアする */
+      function clearForm() {
+        document.getElementById("fCode").value = "";
+        document.getElementById("fName").value = "";
+        document.getElementById("fLogic").value = "";
+        const area = document.getElementById("fileInputArea");
+        area.innerHTML = "";
+        fileInputCount = 0;
+        /* 初期3件 */
+        addFileInput();
+        addFileInput();
+        addFileInput();
+        document.getElementById("testInputFields").innerHTML = "";
+        document.getElementById("testDataArea").style.display = "none";
+        document.getElementById("testResultArea").innerHTML = "";
+        document.getElementById("testResultArea").style.display = "none";
+        refreshSourceFileSelect();
+      }
+
+      /* =====================================================
+                                       保存処理（新規追加・編集の共通処理）
+                                       入力値のバリデーション後にデータを保存します
+                                    ===================================================== */
+      function saveLogic() {
+        const code = document.getElementById("fCode").value.trim();
+        const name = document.getElementById("fName").value.trim();
+        const logic = document.getElementById("fLogic").value.trim();
+        const fileInputs = document.querySelectorAll(".file-input");
+        const fileList = [...fileInputs]
+          .map((input) => input.value.trim())
+          .filter((v) => v);
+        const file = fileList;
+
+        /* ----- バリデーション（入力チェック）----- */
+
+        /* 必須項目チェック */
+        if (!code) {
+          alert("業務ロジックコードを入力してください。");
+          document.getElementById("fCode").focus();
+          return;
+        }
+        if (!name) {
+          alert("業務名を入力してください。");
+          document.getElementById("fName").focus();
+          return;
+        }
+        if (!logic) {
+          alert("処理ロジックを入力してください。");
+          document.getElementById("fLogic").focus();
+          return;
+        }
+
+        /* コードの重複チェック（新規追加時のみ） */
+        if (!editTargetId) {
+          const duplicate = logicData.find((d) => d.code === code);
+          if (duplicate) {
+            alert(
+              `コード「${code}」は既に登録されています。\n別のコードを入力してください。`,
+            );
+            document.getElementById("fCode").focus();
+            return;
+          }
+        }
+
+        /* ----- データの保存 ----- */
+
+        if (editTargetId) {
+          /* 編集モード：既存データを更新 */
+          const index = logicData.findIndex((d) => d.id === editTargetId);
+          if (index !== -1) {
+            logicData[index] = { id: editTargetId, code, name, logic, file };
+          }
+          showToast("✅ 業務ロジックを更新しました", "success");
+        } else {
+          /* 新規追加モード：配列に追加 */
+          logicData.push({ id: nextId++, code, name, logic, file });
+          showToast("✅ 業務ロジックを追加しました", "success");
+        }
+
+        /* フォームを閉じてテーブルを再描画 */
+        closeEditModal();
+        renderTable(logicData);
+      }
+
+      /* =====================================================
+                                       詳細表示モーダルを開く
+                                       @param {number} id - 詳細表示対象のID
+                                    ===================================================== */
+      function openDetail(id) {
+        const item = logicData.find((d) => d.id === id);
+        if (!item) return;
+
+        /* 詳細情報のHTMLを生成 */
+        document.getElementById("detailBody").innerHTML = `
+                                        <div class="detail-row">
+                                          <div class="detail-label">業務ロジックコード</div>
+                                          <div class="detail-value mono">${escapeHtml(item.code)}</div>
+                                        </div>
+                                        <div class="detail-row">
+                                          <div class="detail-label">業務名</div>
+                                          <div class="detail-value">${escapeHtml(item.name)}</div>
+                                        </div>
+                                        <div class="detail-row">
+                                          <div class="detail-label">処理ロジック</div>
+                                          <div class="detail-value mono">${escapeHtml(item.logic)}</div>
+                                        </div>
+                                        <div class="detail-row">
+                                          <div class="detail-label">使用ファイル名</div>
+                                          <div class="detail-value">${escapeHtml(item.file || "（未設定）")}</div>
+                                        </div>
+                                      `;
+
+        document.getElementById("detailModal").classList.add("show");
+      }
+
+      /* 詳細モーダルを閉じる */
+      function closeDetailModal() {
+        document.getElementById("detailModal").classList.remove("show");
+      }
+
+      /* =====================================================
+                                       削除確認モーダルを開く
+                                       誤操作防止のため、削除前に確認を求めます
+                                       @param {number} id - 削除対象のID
+                                    ===================================================== */
+      function openDelete(id) {
+        const item = logicData.find((d) => d.id === id);
+        if (!item) return;
+
+        deleteTargetId = id; /* 削除対象IDを記憶 */
+
+        /* モーダルに削除対象の情報を表示 */
+        document.getElementById("deleteTargetCode").textContent = item.code;
+        document.getElementById("deleteTargetName").textContent = item.name;
+
+        document.getElementById("deleteModal").classList.add("show");
+      }
+
+      /* 削除確認モーダルを閉じる */
+      function closeDeleteModal() {
+        document.getElementById("deleteModal").classList.remove("show");
+        deleteTargetId = null;
+      }
+
+      /* =====================================================
+                                       削除実行処理
+                                       「削除する」ボタンが押されたときに実行されます
+                                    ===================================================== */
+      function doDelete() {
+        if (!deleteTargetId) return;
+
+        /* 対象IDを配列から除外 */
+        logicData = logicData.filter((d) => d.id !== deleteTargetId);
+
+        /* モーダルを閉じてテーブルを再描画 */
+        closeDeleteModal();
+        renderTable(logicData);
+
+        showToast("🗑 業務ロジックを削除しました", "danger");
+      }
+
+      /* =====================================================
+                                 処理ロジックからセル参照を抽出して
+                                 テスト入力欄を自動生成
+                              ===================================================== */
+      function generateTestInputs() {
+        const logic = document.getElementById("fLogic").value;
+
+        const matches = logic.match(/{{(.*?)}}/g) || [];
+
+        const area = document.getElementById("testDataArea");
+        const fields = document.getElementById("testInputFields");
+
+        if (!matches || matches.length === 0) {
+          area.style.display = "none";
+          fields.innerHTML = "";
+          return;
+        }
+
+        const uniqueRefs = [
+          ...new Set(matches.map((m) => m.replace(/[{}]/g, ""))),
+        ];
+
+        area.style.display = "block";
+
+        fields.innerHTML = uniqueRefs
+          .map(
+            (ref) => `
+        <div style="margin-bottom:10px;">
+          <label
+            style="
+              display:block;
+              font-size:12px;
+              margin-bottom:4px;
+            "
+          >
+            ${escapeHtml(ref.replace(/[{}]/g, ""))}
+          </label>
+
+          <input
+            type="text"
+            class="input"
+            id="test_${encodeURIComponent(ref)}"
+            placeholder="${escapeHtml(ref.replace(/[{}]/g, ""))}の値を入力"
+          />
+        </div>
+      `,
+          )
+          .join("");
+      }
+      /* =====================================================
+         ロジック変更時処理
+         ===================================================== */
+      function handleLogicChange() {
+        generateUsedVariables();
+        generateTestInputs();
+      }
+
+      /* =====================================================
+         セルマッピング生成
+         ===================================================== */
+      function testLogic() {
+        const logic = document.getElementById("fLogic").value.trim();
+
+        if (!logic) {
+          alert("処理ロジックを入力してください。");
+          return;
+        }
+
+        const resultArea = document.getElementById("testResultArea");
+
+        try {
+          /* =========================================
+              セル参照抽出
+             ========================================= */
+          const matches = logic.match(/{{(.*?)}}/g) || [];
+
+          const uniqueRefs = [
+            ...new Set(matches.map((m) => m.replace(/[{}]/g, ""))),
+          ];
+
+          /* =========================================
+              入力値取得
+             ========================================= */
+          const dbRowData = {};
+
+          uniqueRefs.forEach((ref) => {
+            const inputValue =
+              document.getElementById(`test_${encodeURIComponent(ref)}`)
+                ?.value ?? "";
+
+            const splitIndex = ref.indexOf(".");
+
+            dbRowData[ref] = {
+              source: ref.substring(0, splitIndex),
+              column: ref.substring(splitIndex + 1),
+              value: inputValue,
+            };
+          });
+
+          /* =========================================
+              Excel式 → JS式
+             ========================================= */
+          let converted = logic;
+
+          /* =========================================
+              セル置換
+             ========================================= */
+          uniqueRefs
+            .sort((a, b) => b.length - a.length)
+            .forEach((ref) => {
+              let value = dbRowData[ref].value;
+
+              if (value === "") {
+                value = 0;
+              }
+
+              if (!isNaN(value)) {
+                value = Number(value);
+              } else {
+                value = `"${String(value).replace(/"/g, '\\"')}"`;
+              }
+
+              converted = converted.replaceAll(`{{${ref}}}`, value);
+            });
+
+          /* =========================================
+              関数変換
+             ========================================= */
+          converted = converted.replace(/AND\s*\(/gi, "and(");
+          converted = converted.replace(/OR\s*\(/gi, "or(");
+          converted = converted.replace(/IFERROR\s*\(/gi, "iferror(");
+          converted = converted.replace(/IF\s*\(/gi, "ifFunc(");
+          converted = converted.replace(/ROUNDUP\s*\(/gi, "roundUpFunc(");
+          converted = converted.replace(/ROUNDDOWN\s*\(/gi, "roundDownFunc(");
+          converted = converted.replace(/ROUND\s*\(/gi, "roundFunc(");
+          /* 比較演算子 */
+          converted = converted.replace(/<>/g, "!=");
+          converted = converted.replace(/"([^"]*)"/g, (match) => {
+            return match; // 文字列リテラルは置換前に保護する処理を追加
+          });
+
+          /* =========================================
+              関数実装
+             ========================================= */
+
+          function and(...args) {
+            return args.every(Boolean);
+          }
+
+          function or(...args) {
+            return args.some(Boolean);
+          }
+
+          function ifFunc(condition, trueValue, falseValue) {
+            return condition ? trueValue : falseValue;
+          }
+
+          function iferror(value, fallback) {
+            try {
+              if (
+                value === Infinity ||
+                value === -Infinity ||
+                Number.isNaN(value)
+              ) {
+                return fallback;
+              }
+
+              return value;
+            } catch {
+              return fallback;
+            }
+          }
+
+          function roundFunc(value, digit) {
+            return Number(Number(value).toFixed(digit));
+          }
+
+          function roundDownFunc(value, digit) {
+            const factor = Math.pow(10, digit);
+
+            return Math.floor(Number(value) * factor) / factor;
+          }
+
+          function roundUpFunc(value, digit) {
+            const factor = Math.pow(10, digit);
+
+            return Math.ceil(Number(value) * factor) / factor;
+          }
+
+          /* =========================================
+              実行
+             ========================================= */
+          const result = eval(converted);
+
+          /* =========================================
+              マッピング表示
+             ========================================= */
+          const mappingHtml = uniqueRefs
+            .map((cell) => {
+              const row = dbRowData[cell];
+
+              return `
+          <tr>
+            <td style="padding:6px;border-top:1px solid var(--line);">
+              ${escapeHtml(cell)}
+            </td>
+
+            <td style="padding:6px;border-top:1px solid var(--line);">
+              ${escapeHtml(row.source)}
+            </td>
+
+            <td style="padding:6px;border-top:1px solid var(--line);">
+              ${escapeHtml(row.column)}
+            </td>
+
+            <td style="padding:6px;border-top:1px solid var(--line);">
+              ${escapeHtml(String(row.value))}
+            </td>
+          </tr>
+        `;
+            })
+            .join("");
+
+          resultArea.style.display = "block";
+
+          resultArea.innerHTML = `
+      <div style="font-weight:600;margin-bottom:12px;">
+        テスト結果
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <strong>変換後実行式</strong>
+
+        <div
+          class="code-cell"
+          style="
+            margin-top:6px;
+            padding:10px;
+            background:#f8f7f6;
+            border-radius:4px;
+            white-space:normal;
+            word-break:break-all;
+          "
+        >
+          ${escapeHtml(converted)}
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <strong>実行結果</strong>
+        <div
+          class="code-cell"
+          style="
+            margin-top:6px;
+            padding:10px;
+            background:#f8f7f6;
+            border-radius:4px;
+            white-space:normal;
+            word-break:break-all;
+            font-size:14px;
+          "
+        >
+          ${escapeHtml(String(result))}
+        </div>
+      </div>
+    `;
+        } catch (e) {
+          resultArea.style.display = "block";
+
+          resultArea.innerHTML = `
+      <div
+        style="
+          color:var(--danger);
+          font-weight:700;
+          margin-bottom:8px;
+        "
+      >
+        テスト失敗
+      </div>
+
+      <div style="line-height:1.8;">
+        ${escapeHtml(e.message)}
+      </div>
+    `;
+        }
+      }
+
+      /* =====================================================
+          Excel関数ヘルパー：関数テンプレートを入力欄に挿入
+         ===================================================== */
+      function insertFunc(template) {
+        const textarea = document.getElementById("fLogic");
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const current = textarea.value;
+
+        if (start !== undefined) {
+          textarea.value =
+            current.substring(0, start) + template + current.substring(end);
+
+          textarea.selectionStart = textarea.selectionEnd =
+            start + template.length;
+        } else {
+          textarea.value += template;
+        }
+
+        textarea.focus();
+
+        handleLogicChange();
+      }
+
+      /* =====================================================
+          トースト通知表示
+          操作が完了したときに画面右下に一時メッセージを表示します
+          @param {string} msg - 表示するメッセージ
+          @param {string} type - 通知タイプ（"success" / "danger"）
+         ===================================================== */
+      function showToast(msg, type) {
+        const toast = document.getElementById("toast");
+        toast.textContent = msg;
+        toast.className = "show " + (type || "");
+
+        /* 2.5秒後に自動で消える */
+        setTimeout(() => {
+          toast.className = "";
+        }, 2500);
+      }
+
+      /* =====================================================
+          HTMLエスケープ（XSS対策）
+          ユーザーが入力したテキストをそのままHTMLに出力しないようにします
+          @param {string} str - エスケープする文字列
+          @returns {string} エスケープ済み文字列
+         ===================================================== */
+      function escapeHtml(str) {
+        if (!str) return "";
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      /* =====================================================
+          モーダル外クリックで閉じる処理
+          モーダルの背景（暗い部分）をクリックしたときに閉じます
+          誤操作を防ぐため、削除確認モーダルは対象外にしています
+         ===================================================== */
+      document
+        .getElementById("detailModal")
+        .addEventListener("click", function (e) {
+          if (e.target === this) closeDetailModal();
+        });
+      /* 削除モーダルは背景クリックで閉じない（誤操作防止） */
+
+      /* =====================================================
+          関数説明モーダル
+         ===================================================== */
+      function openFuncHelpModal() {
+        document.getElementById("funcHelpModal").classList.add("show");
+      }
+
+      function closeFuncHelpModal() {
+        document.getElementById("funcHelpModal").classList.remove("show");
+      }
+      function refreshSourceFileSelect() {
+        const select = document.getElementById("sourceFileSelect");
+
+        const fileInputs = document.querySelectorAll(".file-input");
+
+        const files = [...fileInputs]
+          .map((x) => x.value.trim())
+          .filter((x) => x);
+
+        select.innerHTML = `
+          <option value="">選択してください</option>
+        `;
+
+        files.forEach((file) => {
+          select.innerHTML += `
+            <option value="${escapeHtml(file)}">
+              ${escapeHtml(file)}
+            </option>
+          `;
+        });
+      }
+      function loadColumns() {
+        const file = document.getElementById("sourceFileSelect").value;
+        const select = document.getElementById("columnSelect");
+        select.innerHTML = '<option value="">選択してください</option>';
+        if (!file) return;
+
+        const columns = dataSourceDefinitions[file] || [];
+
+        columns.forEach((col) => {
+          select.innerHTML += `
+            <option value="${escapeHtml(col)}">
+              ${escapeHtml(col)}
+            </option>
+          `;
+        });
+      }
+      function insertVariable() {
+        const source = document.getElementById("sourceFileSelect").value;
+        const column = document.getElementById("columnSelect").value;
+
+        if (!source || !column) {
+          alert("使用ファイルと項目名を選択してください。");
+          return;
+        }
+
+        const variable = `{{${source}.${column}}}`;
+
+        const textarea = document.getElementById("fLogic");
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+
+        const current = textarea.value;
+
+        textarea.value =
+          current.substring(0, start) + variable + current.substring(end);
+
+        textarea.selectionStart = textarea.selectionEnd =
+          start + variable.length;
+
+        textarea.focus();
+
+        /* ★超重要 */
+        handleLogicChange();
+      }
+      function generateUsedVariables() {
+        const logic = document.getElementById("fLogic").value;
+
+        const matches = logic.match(/{{(.*?)}}/g) || [];
+
+        const uniqueRefs = [...new Set(matches)];
+
+        const area = document.getElementById("usedVariablesArea");
+        const list = document.getElementById("usedVariablesList");
+
+        if (uniqueRefs.length === 0) {
+          area.style.display = "none";
+          list.innerHTML = "";
+          return;
+        }
+
+        area.style.display = "block";
+
+        list.innerHTML = uniqueRefs
+          .map(
+            (v) => `
+        <div
+          style="
+            padding:4px 8px;
+            background:#deecf9;
+            border-radius:4px;
+            font-size:11px;
+            font-family:Consolas;
+          "
+        >
+          ${escapeHtml(v)}
+        </div>
+      `,
+          )
+          .join("");
+      }
+    </script>
+  </body>
+</html>

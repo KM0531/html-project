@@ -1,0 +1,1137 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sp_file_request</title>
+    <!-- ★小林修正★ START -->
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <!-- ★小林修正★ END -->
+    <style>
+      :root {
+        --sp-blue: #0078d4;
+        --sp-blue-dark: #106ebe;
+        --bg: #f3f2f1;
+        --panel: #ffffff;
+        --line: #e1dfdd;
+        --line2: #edebe9;
+        --text: #323130;
+        --muted: #605e5c;
+        --soft: #faf9f8;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 3px 12px rgba(0, 0, 0, 0.04);
+        --ok: #107c10;
+        --warn: #d13438;
+        --info: #0f6cbd;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          "Segoe UI", "Segoe UI Variable", "Hiragino Kaku Gothic ProN", Meiryo,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .topbar {
+        height: 52px;
+        background: var(--sp-blue);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+      }
+      .brand {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .top-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        border: 1px solid #c8c6c4;
+        background: #fff;
+        color: var(--text);
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .btn.primary {
+        background: var(--sp-blue);
+        border-color: var(--sp-blue);
+        color: #fff;
+        font-weight: 600;
+      }
+      .btn.primary:hover {
+        background: var(--sp-blue-dark);
+      }
+      .btn.ghost:hover {
+        background: #f8f8f8;
+      }
+      .shell {
+        padding: 14px 18px 24px;
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+      .page-head {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        box-shadow: var(--shadow);
+        padding: 16px 18px;
+        margin-bottom: 14px;
+      }
+      .page-head h1 {
+        margin: 0 0 4px;
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .page-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .tabs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 0 0 14px;
+      }
+      .tab {
+        border: 1px solid #c8c6c4;
+        background: var(--soft);
+        color: var(--text);
+        border-radius: 4px;
+        padding: 8px 14px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .tab.active {
+        background: #0078d4;
+        border-color: #0078d4;
+        color: #fff;
+        font-weight: 700;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      }
+      .screen {
+        display: none;
+      }
+      .screen.active {
+        display: block;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 14px;
+        align-items: start;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+      .card h2 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .subnote {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+        margin-bottom: 12px;
+      }
+      .cycle-tabs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .cycle-tab {
+        border: 1px solid #c8c6c4;
+        background: #fff;
+        color: var(--text);
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .cycle-tab.active {
+        background: #eef6fc;
+        border-color: #9ccbf0;
+        color: #0f4a7a;
+        font-weight: 600;
+      }
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .action-row {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin: 0 0 12px;
+        flex-wrap: wrap;
+      }
+      .btn.danger {
+        background: #fff;
+        border-color: #d13438;
+        color: #a80000;
+        font-weight: 600;
+      }
+      .btn.danger:hover {
+        background: #fde7e9;
+      }
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+      }
+      thead th {
+        background: #005b70;
+        color: #fff;
+        text-align: left;
+        font-weight: 600;
+        padding: 10px 10px;
+        white-space: nowrap;
+      }
+      tbody td {
+        border-top: 1px solid #edf0f2;
+        padding: 10px 10px;
+        vertical-align: top;
+      }
+      tbody tr:nth-child(odd) {
+        background: #fafafa;
+      }
+      tbody tr:hover {
+        background: #eef6fb;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .pill {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        border: 1px solid #d2d0ce;
+        background: #faf9f8;
+        color: #605e5c;
+        white-space: nowrap;
+      }
+      .pill.blue {
+        background: #eef6fc;
+        border-color: #c7e0f4;
+        color: #0f4a7a;
+      }
+      .pill.green {
+        background: #edf7ed;
+        border-color: #b7dfb7;
+        color: #107c10;
+      }
+      .pill.red {
+        background: #fde7e9;
+        border-color: #f1bfc5;
+        color: #a80000;
+      }
+      .pill.yellow {
+        background: #fff8e5;
+        border-color: #f1d9a7;
+        color: #9a6b00;
+      }
+      .checkgroup {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--soft);
+        padding: 12px;
+      }
+      .checkgroup-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .checkgroup-title {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .checkgroup-meta {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .file-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .file-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+      }
+      .file-item label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 12.5px;
+        width: 100%;
+      }
+      .file-item input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--sp-blue);
+        flex: 0 0 auto;
+      }
+      .file-name {
+        font-family: Consolas, monospace;
+        font-size: 12px;
+        word-break: break-all;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        border: 1px solid #c8c6c4;
+        border-radius: 4px;
+        padding: 8px 10px;
+        font: inherit;
+        font-size: 13px;
+        background: #fff;
+        outline: none;
+      }
+      .field textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+      .request-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .summary-box {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 12px;
+        background: #fff;
+      }
+      .summary-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .summary-value {
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .selected-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .selected-item {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        padding: 12px;
+      }
+      .selected-item-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 10px;
+      }
+      .selected-item-title {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .selected-item-meta {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .selected-item-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .footer-note {
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .hidden {
+        display: none !important;
+      }
+      @media (max-width: 1100px) {
+        .layout,
+        .request-summary,
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* ★小林修正★ START */
+      /* ===== パス全体 ===== */
+      /*
+      .path {
+        display: flex;
+        width: 85%;
+        font-size: 13px;
+      }
+      */
+
+      /* ===== 各ステップ ===== */
+      /*
+      .step {
+        position: relative;
+        flex: 1;
+        text-align: center;
+        padding: 10px 0;
+        background: #ccc;
+        color: white;
+        margin-right: 16px;
+      }
+
+      .step::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: -16px;
+
+        width: 0;
+        height: 0;
+
+        border-top: 20px solid transparent;
+        border-bottom: 20px solid transparent;
+        border-left: 16px solid #ccc;
+      }
+      */
+
+      /* ===== 完了済 ===== */
+      /*
+      .step.done {
+        background: #27ae60;
+      }
+      .step.done::after {
+        border-left-color: #27ae60;
+      }
+      */
+
+      /* ===== 現在 ===== */
+      /*
+      .step.current {
+        background: #3498db;
+      }
+      .step.current::after {
+        border-left-color: #3498db;
+      }
+      */
+
+      /* ===== ボタン ===== */
+      /*
+      .next-btn {
+        margin-bottom: 10px;
+        padding: 3px 7px;
+        cursor: pointer;
+      }
+      .reset-btn {
+        margin-bottom: 10px;
+        padding: 3px 7px;
+        cursor: pointer;
+      }
+      */
+      /* ★小林修正★ END */
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="brand">ファイル連携管理</div>
+      <div class="top-actions">
+        <a
+          class="btn ghost"
+          href="#"
+          onclick="
+            setScreen('list');
+            return false;
+          "
+          >業務一覧</a
+        >
+        <a
+          class="btn primary"
+          href="#"
+          onclick="
+            setScreen('request');
+            return false;
+          "
+          >依頼画面</a
+        >
+      </div>
+    </div>
+
+    <div class="shell">
+      <div class="page-head">
+        <h1>業務一覧・依頼画面モック</h1>
+        <p>
+          サイクルごとに業務を切り替え、業務とファイルを紐づけて依頼条件を設定します。複数業務を一括選択し、再依頼時は前回選択状態を引き継ぎます。画面の雰囲気は
+          sp_main の後続画面として自然につながるようにしています。
+        </p>
+      </div>
+
+      <!-- ★小林修正★ START -->
+      <!-- ===== パス ===== -->
+      <!--
+      <div class="path" id="path">
+      </div>
+      -->
+      <!-- ===== 操作ボタン ===== -->
+      <!--
+      <button class="next-btn" onclick="nextStep()">次へ</button>
+      <button class="reset-btn" onclick="resetStep()">リセット</button>
+      -->
+      <!-- ★小林修正★ END -->
+
+      <div class="screen active" id="screen-list">
+        <div class="tabs">
+          <button class="tab active" data-screen-tab="list">業務一覧</button>
+          <button class="tab" data-screen-tab="request">依頼画面</button>
+        </div>
+
+        <div class="layout">
+          <section class="card">
+            <h2>対象一覧</h2>
+            <div class="subnote">
+              サイクルごとのタブで業務を切り替え、複数選択できます。選択した業務は依頼画面へ引き継がれます。
+            </div>
+            <div class="cycle-tabs" id="cycleTabsList"></div>
+            <div class="summary-row">
+              <div>表示件数：<strong id="listCount">0</strong></div>
+              <div id="listHint"></div>
+            </div>
+            <div class="action-row">
+              <button class="btn danger" id="clearAllBtn" type="button">
+                すべてのチェックを解除
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 44px">選択</th>
+                    <th>業務名</th>
+                    <th>必要ファイル</th>
+                    <th>対応部署</th>
+                    <th>依頼先</th>
+                    <th>依頼方法</th>
+                    <th>必須/任意</th>
+                  </tr>
+                </thead>
+                <tbody id="listBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <aside class="card">
+            <h2>選択中の業務</h2>
+            <div class="subnote">
+              複数業務をまとめて依頼できます。再依頼時は前回のチェック状態を初期値として保持します。
+            </div>
+            <div class="selected-list" id="selectedSummary"></div>
+          </aside>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-request">
+        <div class="tabs">
+          <button class="tab" data-screen-tab="list">業務一覧</button>
+          <button class="tab active" data-screen-tab="request">依頼画面</button>
+        </div>
+
+        <div class="layout">
+          <section class="card">
+            <h2>依頼画面</h2>
+            <div class="subnote">
+              対象一覧で選択した業務を元に、依頼先・依頼方法・期限・メッセージを設定します。業務に紐づくファイルは初期状態でチェック済みにできます。
+            </div>
+
+            <div class="request-summary">
+              <div class="summary-box">
+                <div class="summary-label">選択業務数</div>
+                <div class="summary-value" id="requestCount">0</div>
+              </div>
+              <div class="summary-box">
+                <div class="summary-label">依頼先</div>
+                <div class="summary-value">部店別に設定</div>
+              </div>
+              <div class="summary-box">
+                <div class="summary-label">依頼方法</div>
+                <div class="summary-value">SharePoint / メール / Teams</div>
+              </div>
+              <div class="summary-box">
+                <div class="summary-label">依頼ステータス</div>
+                <div class="summary-value">下書き</div>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label>依頼先部店</label>
+                <select>
+                  <option>営業第一部</option>
+                  <option>営業第二部</option>
+                  <option>資産管理部</option>
+                  <option>施設管理部</option>
+                  <option selected>複数部店</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>依頼方法</label>
+                <select>
+                  <option selected>SharePoint</option>
+                  <option>メール</option>
+                  <option>Teams</option>
+                  <option>手動通知</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>期限</label>
+                <input type="date" value="2026-04-30" />
+              </div>
+              <div class="field">
+                <label>件名</label>
+                <input type="text" value="【依頼】月次ファイル提出のお願い" />
+              </div>
+              <div class="field" style="grid-column: 1 / -1">
+                <label>メッセージ</label>
+                <textarea>
+各部店ご担当者様
+
+対象業務のファイル提出をお願いします。
+選択業務に紐づくファイルは自動でチェック済み表示になります。
+必要に応じてチェックを外して再依頼対象を調整してください。</textarea
+                >
+              </div>
+            </div>
+          </section>
+
+          <aside class="card">
+            <h2>依頼対象</h2>
+            <div class="subnote">
+              業務を選択すると、紐づくファイルがチェック済みで表示されます。再依頼時はここで外して調整します。
+            </div>
+            <div class="toolbar">
+              <button
+                class="btn primary"
+                onclick="alert('モックのため依頼送信は未実装です')"
+              >
+                依頼送信
+              </button>
+              <button class="btn" onclick="setScreen('list')">
+                業務一覧へ戻る
+              </button>
+            </div>
+            <div class="selected-list" id="requestSelected"></div>
+          </aside>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        SharePoint
+        風のデモモックです。業務一覧で選択した内容は依頼画面に引き継がれます。
+      </div>
+    </div>
+
+    <script>
+      const cycles = [
+        "全サイクル",
+        "年次",
+        "四半期",
+        "月次",
+        "週次",
+        "日次",
+        "随時",
+      ];
+      const businessData = [
+        {
+          id: "B001",
+          cycle: "年次",
+          name: "未払修繕費仕訳計上業務",
+          files: ["総勘定元帳.xlsx"],
+          dept: "経理部",
+          target: "営業第一部",
+          method: "SharePoint",
+          required: "必須",
+        },
+        {
+          id: "B002",
+          cycle: "年次",
+          name: "年次決算資料収集",
+          files: ["決算依頼書.xlsx", "締め処理一覧.xlsx"],
+          dept: "経理部",
+          target: "営業第一部",
+          method: "SharePoint",
+          required: "必須",
+        },
+        {
+          id: "B003",
+          cycle: "年次",
+          name: "年次監査資料収集",
+          files: ["監査依頼書.xlsx", "証憑一覧.xlsx"],
+          dept: "経理部",
+          target: "資産管理部",
+          method: "メール",
+          required: "必須",
+        },
+        {
+          id: "B004",
+          cycle: "四半期",
+          name: "四半期実績収集",
+          files: ["四半期実績.xlsx", "差異分析.xlsx"],
+          dept: "経理部",
+          target: "営業第二部",
+          method: "Teams",
+          required: "必須",
+        },
+        {
+          id: "B005",
+          cycle: "四半期",
+          name: "四半期見込み収集",
+          files: ["見込み集計.xlsx"],
+          dept: "経理部",
+          target: "営業第一部",
+          method: "SharePoint",
+          required: "任意",
+        },
+        {
+          id: "B006",
+          cycle: "月次",
+          name: "月次支払証憑収集",
+          files: ["支払証憑一覧.xlsx", "添付証憑.xlsx"],
+          dept: "経理部",
+          target: "施設管理部",
+          method: "SharePoint",
+          required: "必須",
+        },
+        {
+          id: "B007",
+          cycle: "月次",
+          name: "月次修繕費収集",
+          files: ["修繕費一覧.xlsx"],
+          dept: "経理部",
+          target: "資産管理部",
+          method: "メール",
+          required: "必須",
+        },
+        {
+          id: "B008",
+          cycle: "月次",
+          name: "月次差異確認",
+          files: ["差異確認.xlsx"],
+          dept: "経理部",
+          target: "営業第一部",
+          method: "Teams",
+          required: "任意",
+        },
+        {
+          id: "B009",
+          cycle: "週次",
+          name: "週次進捗収集",
+          files: ["週次進捗.xlsx"],
+          dept: "経理部",
+          target: "営業第二部",
+          method: "SharePoint",
+          required: "必須",
+        },
+        {
+          id: "B010",
+          cycle: "週次",
+          name: "週次承認確認",
+          files: ["承認一覧.xlsx"],
+          dept: "経理部",
+          target: "施設管理部",
+          method: "メール",
+          required: "任意",
+        },
+        {
+          id: "B011",
+          cycle: "日次",
+          name: "日次実績収集",
+          files: ["日次実績.xlsx"],
+          dept: "経理部",
+          target: "営業第一部",
+          method: "SharePoint",
+          required: "必須",
+        },
+        {
+          id: "B012",
+          cycle: "日次",
+          name: "日次入金確認",
+          files: ["入金確認.xlsx"],
+          dept: "経理部",
+          target: "営業第二部",
+          method: "Teams",
+          required: "必須",
+        },
+        {
+          id: "B013",
+          cycle: "随時",
+          name: "随時依頼フォーム",
+          files: ["随時依頼.xlsx"],
+          dept: "経理部",
+          target: "全部署",
+          method: "メール",
+          required: "任意",
+        },
+      ];
+
+      const state = {
+        cycle: "全サイクル",
+        // 必ず B001 を選択状態にする
+        selected: new Set(["B001"]),
+        // 必ず B001 のファイルをチェック状態にする
+        fileChecks: {
+          B001: {
+            "総勘定元帳.xlsx": true,
+          },
+        },
+      };
+
+      const byId = (id) => document.getElementById(id);
+
+      // ★小林修正★ START
+      /* ===== ステータス一覧 ===== */
+      /*
+      const statusList = ["ファイル準備", "上長確認", "経理部への提出", "完了"];
+      */
+      /* 現在ステータス */
+      /*
+      let currentStep = 0;
+      */
+      /* ===== 初期描画 ===== */
+      /*
+      function renderPath() {
+        const path = document.getElementById("path");
+        path.innerHTML = "";
+        statusList.forEach((name, index) => {
+          const div = document.createElement("div");
+          div.className = "step";
+      */
+      /* 状態判定 */
+      /*
+          if (index < currentStep) {
+            div.classList.add("done");
+          } else if (index === currentStep) {
+            div.classList.add("current");
+          }
+          div.textContent = name;
+          path.appendChild(div);
+        });
+      }
+      */
+      /* ===== 次へ ===== */
+      /*
+      function nextStep() {
+        if (currentStep < statusList.length - 1) {
+          currentStep++;
+          renderPath();
+        } else {
+          alert("これ以上進めません");
+        }
+      }
+      */
+      /* ===== リセット ===== */
+      /*
+      function resetStep() {
+        currentStep = 0;
+        renderPath();
+      }
+      */
+      /* 初期表示 */
+      /*
+      renderPath();
+      */
+      // ★小林修正★ END
+
+      function saveState() {
+        localStorage.setItem(
+          "mock_selected_businesses",
+          JSON.stringify([...state.selected]),
+        );
+        localStorage.setItem(
+          "mock_file_checks",
+          JSON.stringify(state.fileChecks),
+        );
+      }
+
+      function setScreen(screen) {
+        byId("screen-list").classList.toggle("active", screen === "list");
+        byId("screen-request").classList.toggle("active", screen === "request");
+        document.querySelectorAll(".tab").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.screenTab === screen);
+        });
+        if (screen === "request") renderRequest();
+      }
+
+      function renderCycleTabs() {
+        const root = byId("cycleTabsList");
+        root.innerHTML = "";
+        cycles.forEach((cycle) => {
+          const btn = document.createElement("button");
+          btn.className =
+            "cycle-tab" + (cycle === state.cycle ? " active" : "");
+          btn.textContent = cycle;
+          btn.onclick = () => {
+            state.cycle = cycle;
+            renderCycleTabs();
+            renderList();
+          };
+          root.appendChild(btn);
+        });
+      }
+
+      function filteredData() {
+        if (state.cycle === "全サイクル") return businessData;
+        return businessData.filter((row) => row.cycle === state.cycle);
+      }
+
+      function renderList() {
+        renderCycleTabs();
+        const rows = filteredData();
+        const tbody = byId("listBody");
+        tbody.innerHTML = "";
+
+        byId("listCount").textContent = String(rows.length);
+        byId("listHint").textContent =
+          state.cycle === "全サイクル"
+            ? "サイクル：全サイクル（年次〜随時を表示）"
+            : `サイクル：${state.cycle}`;
+
+        rows.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+        <td><input type="checkbox" data-id="${row.id}" ${state.selected.has(row.id) ? "checked" : ""} /></td>
+        <td>
+          <div style="font-weight:600;margin-bottom:4px;">${row.name}</div>
+          <div class="muted">業務ID：${row.id}</div>
+        </td>
+        <td>
+          <div>${row.files.map((f) => `<span class="pill blue" style="margin:0 6px 6px 0;">${f}</span>`).join("")}</div>
+        </td>
+        <td>${row.dept}</td>
+        <td>${row.target}</td>
+        <td>${row.method}</td>
+        <td><span class="pill ${row.required === "必須" ? "red" : "yellow"}">${row.required}</span></td>
+      `;
+          tr.querySelector('input[type="checkbox"]').addEventListener(
+            "change",
+            (e) => {
+              if (e.target.checked) state.selected.add(row.id);
+              else state.selected.delete(row.id);
+              saveState();
+              renderSelectedSummary();
+            },
+          );
+          tbody.appendChild(tr);
+        });
+
+        renderSelectedSummary();
+      }
+
+      function selectedRows() {
+        return businessData.filter((row) => state.selected.has(row.id));
+      }
+
+      function renderSelectedSummary() {
+        const root = byId("selectedSummary");
+        const items = selectedRows();
+        root.innerHTML = "";
+        if (items.length === 0) {
+          root.innerHTML = `<div class="subnote">まだ業務が選択されていません。左側の一覧から選択してください。</div>`;
+          return;
+        }
+
+        items.forEach((row) => {
+          const div = document.createElement("div");
+          div.className = "selected-item";
+          div.innerHTML = `
+        <div class="selected-item-head">
+          <div>
+            <div class="selected-item-title">${row.name}</div>
+            <div class="selected-item-meta">${row.cycle} / ${row.dept} / ${row.target} / ${row.method}</div>
+          </div>
+          <span class="pill blue">選択中</span>
+        </div>
+        <div class="selected-item-meta">紐づくファイル：${row.files.join("、")}</div>
+        <div class="selected-item-actions">
+          <button class="btn" data-go-request="${row.id}">依頼画面で確認</button>
+          <button class="btn" data-remove="${row.id}">選択解除</button>
+        </div>
+      `;
+          root.appendChild(div);
+        });
+
+        root.querySelectorAll("[data-remove]").forEach((btn) => {
+          btn.onclick = () => {
+            state.selected.delete(btn.dataset.remove);
+            state.fileChecks[btn.dataset.remove] = undefined;
+            saveState();
+            renderList();
+          };
+        });
+        root.querySelectorAll("[data-go-request]").forEach((btn) => {
+          btn.onclick = () => setScreen("request");
+        });
+      }
+
+      function clearAllSelections() {
+        if (!confirm("すべての選択を解除します。よろしいですか？")) return;
+        state.selected = new Set();
+        state.fileChecks = {};
+        saveState();
+        renderList();
+        renderRequest();
+      }
+
+      function ensureFileState(row) {
+        if (!state.fileChecks[row.id]) {
+          state.fileChecks[row.id] = {};
+          row.files.forEach((f) => (state.fileChecks[row.id][f] = true));
+        }
+      }
+
+      function renderRequest() {
+        const root = byId("requestSelected");
+        const items = selectedRows();
+        byId("requestCount").textContent = String(items.length);
+        root.innerHTML = "";
+
+        if (items.length === 0) {
+          root.innerHTML = `<div class="subnote">対象一覧で業務を選択すると、ここに表示されます。</div>`;
+          return;
+        }
+
+        items.forEach((row) => {
+          ensureFileState(row);
+          const div = document.createElement("div");
+          div.className = "selected-item";
+          const checks = row.files
+            .map((file) => {
+              const checked =
+                state.fileChecks[row.id] &&
+                state.fileChecks[row.id][file] !== false;
+              return `
+          <div class="file-item">
+            <label>
+              <input type="checkbox" ${checked ? "checked" : ""} data-file="${file}" data-row="${row.id}" />
+              <span class="file-name">${file}</span>
+            </label>
+          </div>
+        `;
+            })
+            .join("");
+          div.innerHTML = `
+        <div class="selected-item-head">
+          <div>
+            <div class="selected-item-title">${row.name}</div>
+            <div class="selected-item-meta">${row.cycle} / ${row.dept} / ${row.target}</div>
+          </div>
+          <span class="pill blue">${row.method}</span>
+        </div>
+        <div class="checkgroup">
+          <div class="checkgroup-head">
+            <div>
+              <div class="checkgroup-title">紐づくファイル</div>
+              <div class="checkgroup-meta">業務に紐づいたファイルはチェック済みで表示。再依頼時はここで外して調整できます。</div>
+            </div>
+            <span class="pill green">初期チェック</span>
+          </div>
+          <div class="file-list">${checks}</div>
+        </div>
+      `;
+          root.appendChild(div);
+        });
+
+        root
+          .querySelectorAll('input[type="checkbox"][data-file]')
+          .forEach((cb) => {
+            cb.onchange = (e) => {
+              const rowId = e.target.dataset.row;
+              const file = e.target.dataset.file;
+              state.fileChecks[rowId] = state.fileChecks[rowId] || {};
+              state.fileChecks[rowId][file] = e.target.checked;
+              saveState();
+            };
+          });
+      }
+
+      document.querySelectorAll("[data-screen-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => setScreen(btn.dataset.screenTab));
+      });
+
+      byId("clearAllBtn").addEventListener("click", clearAllSelections);
+
+      // 初期状態を固定するため既存状態を削除
+      localStorage.removeItem("mock_selected_businesses");
+      localStorage.removeItem("mock_file_checks");
+      renderList();
+      renderRequest();
+      // 必ず依頼画面を表示
+      setScreen("request");
+      saveState();
+      window.setScreen = setScreen;
+    </script>
+  </body>
+</html>

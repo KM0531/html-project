@@ -1,0 +1,609 @@
+<!-- ★小林修正★ START -->
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>業務一覧画面</title>
+    <!-- 小林修正★ START -->
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <!-- 小林修正★ END -->
+    <style>
+      body {
+        font-family: "Segoe UI", "Meiryo";
+        background: #f4f4f4;
+        margin: 0;
+      }
+      .header {
+        background: #fff;
+        border-bottom: 2px solid #222;
+        padding: 14px 24px;
+        font-weight: bold;
+      }
+      .title {
+        font-size: 20px;
+        font-weight: bold;
+        margin: 16px;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .filter {
+        margin-bottom: 12px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+      }
+      th {
+        background: #eee;
+        padding: 10px;
+        text-align: left;
+        /* cursor: pointer; */
+      }
+      td {
+        padding: 10px;
+        border-top: 1px solid #ddd;
+      }
+      .sort-btn {
+        margin-left: 6px;
+        cursor: pointer;
+        font-size: 10px;
+      }
+      select {
+        padding: 4px;
+      }
+      .link {
+        color: #0078d4;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+      /* 未着手 */
+      .status-waiting {
+        color: #888780;
+        font-weight: bold;
+      }
+      /* 準備中 */
+      .status-preparation {
+        color: #7f77dd;
+        font-weight: bold;
+      }
+      /* 作業可能 */
+      .status-workable {
+        color: #1d9e75;
+        font-weight: bold;
+      }
+      /* 作業中 */
+      .status-working {
+        color: #378add;
+        font-weight: bold;
+      }
+      /* 確認待ち */
+      .status-awaiting-approval {
+        color: #ef9f27;
+        font-weight: bold;
+      }
+      /* 確認済み */
+      .status-done-approval {
+        color: #639922;
+        font-weight: bold;
+      }
+      /* 完了 */
+      .status-completion {
+        color: #3b6d11;
+        font-weight: bold;
+      }
+      /* 差し戻し */
+      .status-remand {
+        color: #e24b4a;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">経理部業務管理システム</div>
+    <div class="title">業務一覧画面</div>
+
+    <div class="container">
+      <div class="filter">
+        <select id="cycleFilter" onchange="onCycleChange()">
+          <option>全量表示</option>
+          <option>年次</option>
+          <option>四半期</option>
+          <option>月次</option>
+          <option>週次</option>
+          <option>日次</option>
+          <option>随時</option>
+        </select>
+
+        <!-- 対象年（全サイクル共通） -->
+        <select
+          id="yearFilter"
+          onchange="onYearChange()"
+          style="display: none"
+        ></select>
+
+        <!-- 対象月（★週次・日次のみ追加） -->
+        <select
+          id="monthFilter"
+          onchange="onMonthChange()"
+          style="display: none"
+        ></select>
+
+        <!-- タイミング詳細（四半期・月次・週次・日次） -->
+        <select
+          id="timingFilter"
+          onchange="
+            applyTimingToAll();
+            render();
+          "
+          style="display: none"
+        ></select>
+
+        <select id="statusFilter" onchange="render()">
+          <option value="all">ステータス全て</option>
+          <option value="未着手">未着手</option>
+          <option value="準備中">準備中</option>
+          <option value="作業可能">作業可能</option>
+          <option value="作業中">作業中</option>
+          <option value="確認待ち">確認待ち</option>
+          <option value="確認済み">確認済み</option>
+          <option value="完了">完了</option>
+          <option value="差し戻し">差し戻し</option>
+        </select>
+
+        <select id="ownerFilter" onchange="render()">
+          <option value="all">担当者全て</option>
+          <option value="佐藤">佐藤</option>
+          <option value="山田">山田</option>
+          <option value="田中">田中</option>
+          <option value="鈴木">鈴木</option>
+        </select>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>
+              サイクル
+              <!--
+              <span class="sort-btn" onclick="sortData('cycle', true)">↑</span>
+              <span class="sort-btn" onclick="sortData('cycle', false)">↓</span>
+              -->
+            </th>
+            <th>
+              業務名
+              <!--
+              <span class="sort-btn" onclick="sortData('name', true)">↑</span>
+              <span class="sort-btn" onclick="sortData('name', false)">↓</span>
+              -->
+            </th>
+            <th>処理タイミング</th>
+            <th>ステータス</th>
+            <th>担当</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <script>
+      const cycleOrder = ["年次", "四半期", "月次", "週次", "日次", "随時"];
+      let currentSort = { key: "id", asc: true };
+
+      const YEARS = ["2024年", "2025年", "2026年", "2027年"];
+      const MONTHS = [
+        "1月",
+        "2月",
+        "3月",
+        "4月",
+        "5月",
+        "6月",
+        "7月",
+        "8月",
+        "9月",
+        "10月",
+        "11月",
+        "12月",
+      ];
+
+      // 指定年月の週数を返す（4週 or 5週）
+      function getWeekOptions(year, month) {
+        const y = parseInt(year);
+        const m = parseInt(month);
+        const days = new Date(y, m, 0).getDate();
+        const firstDow = new Date(y, m - 1, 1).getDay();
+        const weeks = firstDow + days > 35 ? 5 : 4;
+        const result = [];
+        for (let w = 1; w <= weeks; w++) result.push(`第${w}週`);
+        return result;
+      }
+
+      // 指定年月の日リストを返す（日のみ）
+      function getDayOptions(year, month) {
+        const y = parseInt(year);
+        const m = parseInt(month);
+        const days = new Date(y, m, 0).getDate();
+        const result = [];
+        for (let d = 1; d <= days; d++) result.push(`${d}日`);
+        return result;
+      }
+
+      /*
+        timingConfig:
+          useMonth   : true のサイクルは月セレクタ（monthFilter）を表示（週次・日次）
+          showDetail : false のサイクルは詳細セレクタを非表示（年次）
+          getDetails : (year, month) => 詳細選択肢[]
+          allDetails : 全量表示インライン用
+      */
+      const timingConfig = {
+        年次: {
+          useMonth: false,
+          showDetail: false,
+          getDetails: () => [],
+          allDetails: YEARS,
+        },
+        四半期: {
+          useMonth: false,
+          showDetail: true,
+          getDetails: () => [
+            "第1四半期",
+            "第2四半期",
+            "第3四半期",
+            "第4四半期",
+          ],
+          allDetails: ["第1四半期", "第2四半期", "第3四半期", "第4四半期"],
+        },
+        月次: {
+          useMonth: false,
+          showDetail: true,
+          getDetails: () => [
+            "1月次",
+            "2月次",
+            "3月次",
+            "4月次",
+            "5月次",
+            "6月次",
+            "7月次",
+            "8月次",
+            "9月次",
+            "10月次",
+            "11月次",
+            "12月次",
+          ],
+          allDetails: [
+            "1月次",
+            "2月次",
+            "3月次",
+            "4月次",
+            "5月次",
+            "6月次",
+            "7月次",
+            "8月次",
+            "9月次",
+            "10月次",
+            "11月次",
+            "12月次",
+          ],
+        },
+        週次: {
+          useMonth: true, // ★ 月セレクタあり
+          showDetail: true,
+          getDetails: (year, month) => getWeekOptions(year, month),
+          allDetails: ["第1週", "第2週", "第3週", "第4週"],
+        },
+        日次: {
+          useMonth: true, // ★ 月セレクタあり
+          showDetail: true,
+          getDetails: (year, month) => getDayOptions(year, month),
+          allDetails: getDayOptions("2026", "4"),
+        },
+        随時: null,
+      };
+
+      function getDefaultTiming(cycle) {
+        const cfg = timingConfig[cycle];
+        if (!cfg) return "なし";
+        return cfg.allDetails[0] || YEARS[0];
+      }
+
+      // ダミーデータ生成
+      const data = [];
+      for (let i = 0; i < 25; i++) {
+        const id = i + 1;
+        const cycle = i < 10 ? "月次" : cycleOrder[i % cycleOrder.length];
+        const name = i < 10 ? "未払修繕費仕訳計上" : "XXXXXXXXXX業務" + (i - 9);
+        let status;
+        let timing;
+        if (i == 8) {
+          status = "完了";
+          timing = "12月次";
+        } else if (i == 9) {
+          status = "完了";
+          timing = "11月次";
+        } else {
+          switch (i % 8) {
+            case 0:
+              status = "未着手";
+              break;
+            case 1:
+              status = "準備中";
+              break;
+            case 2:
+              status = "作業可能";
+              break;
+            case 3:
+              status = "作業中";
+              break;
+            case 4:
+              status = "確認待ち";
+              break;
+            case 5:
+              status = "確認済み";
+              break;
+            case 6:
+              status = "完了";
+              break;
+            case 7:
+              status = "差し戻し";
+              break;
+            default:
+              alert("ロジックエラー");
+          }
+          timing = getDefaultTiming(cycle);
+        }
+        let owner;
+        switch (i % 4) {
+          case 0:
+            owner = "佐藤";
+            break;
+          case 1:
+            owner = "山田";
+            break;
+          case 2:
+            owner = "田中";
+            break;
+          case 3:
+            owner = "鈴木";
+            break;
+          default:
+            alert("ロジックエラー");
+        }
+        data.push({
+          id,
+          cycle,
+          name,
+          timing,
+          status,
+          owner,
+        });
+      }
+
+      // ─── ヘルパー：現在の年・月を取得 ────────────────
+      function getSelectedYear() {
+        return document.getElementById("yearFilter").value;
+      }
+      function getSelectedMonth() {
+        return document.getElementById("monthFilter").value;
+      }
+
+      // ─── サイクル変更 ─────────────────────────────────
+      function onCycleChange() {
+        const cycle = document.getElementById("cycleFilter").value;
+        const cfg = timingConfig[cycle];
+
+        // 全セレクタ非表示にリセット
+        document.getElementById("yearFilter").style.display = "none";
+        document.getElementById("monthFilter").style.display = "none";
+        document.getElementById("timingFilter").style.display = "none";
+
+        if (cycle === "全量表示" || !cfg) {
+          render();
+          return;
+        }
+
+        // 年セレクタは全サイクル共通で表示
+        const yearSel = document.getElementById("yearFilter");
+        yearSel.innerHTML = YEARS.map((y) => `<option>${y}</option>`).join("");
+        yearSel.style.display = "";
+
+        // ★ 週次・日次のみ月セレクタを表示
+        if (cfg.useMonth) {
+          const monthSel = document.getElementById("monthFilter");
+          monthSel.innerHTML = MONTHS.map((m) => `<option>${m}</option>`).join(
+            "",
+          );
+          monthSel.style.display = "";
+        }
+
+        // 詳細セレクタ（年次は非表示）
+        if (cfg.showDetail) {
+          updateTimingDetails();
+          document.getElementById("timingFilter").style.display = "";
+        }
+
+        render();
+      }
+
+      // ─── 年変更 ───────────────────────────────────────
+      function onYearChange() {
+        const cycle = document.getElementById("cycleFilter").value;
+        const cfg = timingConfig[cycle];
+
+        // 年次：timing を年の値で直接更新
+        if (cycle === "年次") {
+          const year = getSelectedYear();
+          data.forEach((d) => {
+            if (d.cycle === "年次") d.timing = year;
+          });
+          render();
+          return;
+        }
+
+        // その他：詳細セレクタを再生成
+        if (cfg && cfg.showDetail) updateTimingDetails();
+        render();
+      }
+
+      // ─── 月変更（週次・日次のみ） ─────────────────────
+      function onMonthChange() {
+        updateTimingDetails();
+        render();
+      }
+
+      // ─── 詳細タイミング選択肢更新 ────────────────────
+      function updateTimingDetails() {
+        const cycle = document.getElementById("cycleFilter").value;
+        const cfg = timingConfig[cycle];
+        if (!cfg || !cfg.showDetail) return;
+
+        // year・month を両方渡す（useMonth:false のサイクルは month を無視）
+        const year = getSelectedYear();
+        const month = cfg.useMonth
+          ? getSelectedMonth().replace("月", "")
+          : null;
+
+        const sel = document.getElementById("timingFilter");
+        sel.innerHTML = cfg
+          .getDetails(year, month)
+          .map((d) => `<option>${d}</option>`)
+          .join("");
+      }
+
+      // ─── タイミング一括変更 ───────────────────────────
+      function applyTimingToAll() {
+        const cycle = document.getElementById("cycleFilter").value;
+        const timing = document.getElementById("timingFilter").value;
+        if (!timing || cycle === "全量表示") return;
+        data.forEach((d) => {
+          if (d.cycle === cycle) d.timing = timing;
+        });
+      }
+      /*
+      function sortData(key, asc) {
+        currentSort = { key, asc };
+        render();
+      }
+      */
+
+      function openPage(name, status) {
+        /* ★小林修正★ START */
+        if (name === "未払修繕費仕訳計上") {
+          switch (status) {
+            case "未着手":
+              window.alert("遷移先要確認");
+              break;
+            case "準備中":
+              window.alert("遷移先要確認");
+              break;
+            case "作業可能":
+              location.href = "accrued_repair_journal.html";
+              break;
+            case "作業中":
+              location.href = "accrued_repair_journal.html";
+              break;
+            case "確認待ち":
+              window.open(
+                "child_confirmation.html",
+                "_blank",
+                "width=1000,height=700",
+              );
+              break;
+            case "確認済み":
+              window.alert("遷移先要確認");
+              break;
+            case "完了":
+              window.alert("遷移先要確認");
+              break;
+            case "差し戻し":
+              location.href = "accrued_repair_journal.html";
+              break;
+            default:
+              window.alert("不正ステータス");
+          }
+        }
+        /* ★小林修正★ END */
+      }
+
+      // ─── テーブル描画 ─────────────────────────────────
+      function render() {
+        const cycle = document.getElementById("cycleFilter").value;
+        const status = document.getElementById("statusFilter").value;
+        const owner = document.getElementById("ownerFilter").value;
+
+        let filtered = data
+          .filter((d) => cycle === "全量表示" || d.cycle === cycle)
+          .filter((d) => status === "all" || d.status === status)
+          .filter((d) => owner === "all" || d.owner === owner);
+
+        filtered.sort((a, b) => {
+          const diff =
+            cycleOrder.indexOf(a.cycle) - cycleOrder.indexOf(b.cycle);
+          if (diff !== 0) return diff;
+          return a.name.localeCompare(b.name);
+        });
+
+        if (currentSort.key && currentSort.key !== "cycle") {
+          filtered.sort((a, b) => {
+            if (a[currentSort.key] < b[currentSort.key])
+              return currentSort.asc ? -1 : 1;
+            if (a[currentSort.key] > b[currentSort.key])
+              return currentSort.asc ? 1 : -1;
+            return 0;
+          });
+        }
+
+        const tbody = document.getElementById("tbody");
+        tbody.innerHTML = "";
+
+        filtered.forEach((d) => {
+          let cls = "";
+          if (d.status === "未着手") cls = "status-waiting";
+          if (d.status === "準備中") cls = "status-preparation";
+          if (d.status === "作業可能") cls = "status-workable";
+          if (d.status === "作業中") cls = "status-working";
+          if (d.status === "確認待ち") cls = "status-awaiting-approval";
+          if (d.status === "確認済み") cls = "status-done-approval";
+          if (d.status === "完了") cls = "status-completion";
+          if (d.status === "差し戻し") cls = "status-remand";
+
+          let timingCell;
+          /* ★小林修正★ START */
+          timingCell = d.timing;
+          /*
+          if (cycle === "全量表示") {
+            const cfg = timingConfig[d.cycle];
+            const opts = cfg ? cfg.allDetails : ["なし"];
+            timingCell = `<select onchange="d.timing=this.value">
+              ${opts.map((o) => `<option${o === d.timing ? " selected" : ""}>${o}</option>`).join("")}
+            </select>`;
+          } else {
+            timingCell = d.timing;
+          }
+          */
+          /* ★小林修正★ END */
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${d.cycle}</td>
+            <td>
+              ${["未着手", "準備中", "確認済み", "完了"].includes(d.status) ? d.name : `<span class="link" onclick="openPage('${d.name}', '${d.status}')">${d.name}</span>`}
+            </td>
+            <td>${timingCell}</td>
+            <td class="${cls}">${d.status}</td>
+            <td>${d.owner}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      onCycleChange();
+    </script>
+  </body>
+</html>
+<!-- ★小林修正★ END -->

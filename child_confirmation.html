@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>依頼確認画面</title>
+    <!-- 小林修正★ START -->
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <!-- 小林修正★ END -->
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        font-size: 13px;
+      }
+
+      /* ===== ヘッダー（ここが今回のポイント） ===== */
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      h1 {
+        font-size: 16px;
+        margin: 0;
+      }
+
+      .header-buttons {
+        display: flex;
+        gap: 10px;
+      }
+
+      .header-buttons button {
+        padding: 6px 14px;
+        cursor: pointer;
+      }
+
+      /* セクションタイトル */
+      .section-title {
+        margin-top: 20px;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      /* テーブル共通 */
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border: 1px solid #333;
+        padding: 4px 6px;
+      }
+
+      th {
+        background-color: #f0f0f0;
+        text-align: left;
+      }
+
+      /* 申請情報 */
+      .info-table td {
+        width: 25%;
+      }
+
+      /* 承認フロー */
+      .approval-flow {
+        display: flex;
+        /* justify-content: space-between; */
+        margin-top: 10px;
+        column-gap: 20px;
+      }
+
+      .approval-box {
+        border: 1px solid #333;
+        width: 30%;
+        padding: 8px;
+      }
+      .approval-box-complete {
+        border: 1px solid #333;
+        width: 30%;
+        padding: 8px;
+        background-color: #d9d9d9;
+      }
+      .approval-box-nt {
+        border: 1px solid #333;
+        width: 30%;
+        padding: 8px;
+        background-color: #fbe2d5;
+      }
+      /* 明細 */
+      .amount {
+        text-align: right;
+      }
+
+      .total-row {
+        font-weight: bold;
+      }
+      /* ★小林修正★ START */
+      /* 申請時コメント */
+      .request-comment-outer {
+        margin-top: 10px;
+      }
+
+      .request-comment-content {
+        border: 1px solid #333;
+        padding: 8px;
+      }
+      .file-link {
+        color: #0078d4;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      .file-link:hover {
+        color: #005a9e;
+      }
+      /* ★小林修正★ END */
+    </style>
+
+    <script>
+      function submitRequest() {
+        // ★小林修正★ START
+        window.close();
+        /*
+        if (!confirm("確認完了")) return;
+        // TODO: 将来API連携
+        alert("完了しました（ダミー）");
+        */
+      }
+
+      /*
+      function goBack() {
+        window.close();
+      }
+      */
+
+      function submitReject() {
+        window.close();
+      }
+
+      // 仕訳結果ダウンロード
+      function downloadResultFile(fileName) {
+        const a = document.createElement("a");
+        a.href = `resultFiles/${fileName}`; // ← resultFiles/フォルダからの相対パス
+        a.download = fileName; // ← 元のファイル名でダウンロード
+        a.click();
+      }
+      // エビデンスダウンロード
+      function downloadEvidenceFile(fileName) {
+        const a = document.createElement("a");
+        a.href = `evidenceFiles/${fileName}`; // ← evidenceFiles/フォルダからの相対パス
+        a.download = fileName; // ← 元のファイル名でダウンロード
+        a.click();
+      }
+      // ★小林修正★ END
+    </script>
+  </head>
+
+  <body>
+    <!-- ===== ヘッダー ===== -->
+    <div class="header">
+      <h1>未払修繕費仕訳計上業務&emsp;依頼確認画面</h1>
+      <div class="header-buttons">
+        <button onclick="submitRequest()">確認</button>
+        <button onclick="submitReject()">差し戻し</button>
+        <!-- ★小林修正★ START -->
+        <!-- <button onclick="goBack()">戻る</button> -->
+        <!-- ★小林修正★ END -->
+      </div>
+    </div>
+
+    <!-- 申請情報 -->
+    <div class="section-title">申請情報</div>
+    <table class="info-table">
+      <tr>
+        <th>確認業務</th>
+        <td>未払修繕費仕訳計上業務</td>
+        <th>対象月</th>
+        <td>2026/4/23</td>
+      </tr>
+      <tr>
+        <th>承認者</th>
+        <td>山田 太郎（AAA123）</td>
+        <th>ステータス</th>
+        <td>確認待ち</td>
+      </tr>
+    </table>
+
+    <!-- 承認フロー -->
+    <div class="section-title">確認フロー</div>
+    <div class="approval-flow">
+      <div class="approval-box-complete">
+        起票者<br />
+        山田 一郎
+      </div>
+      <div class="approval-box-nt">
+        確認者<br />
+        山田 二郎
+      </div>
+      <!-- ★小林修正★ START -->
+      <!--
+      <div class="approval-box">
+        確認者2<br />
+        山田 三郎
+      </div>
+      -->
+      <!-- ★小林修正★ END -->
+    </div>
+    <!-- ★小林修正★ START -->
+    <!-- 差し戻しコメント -->
+    <div class="section-title">差し戻しコメント</div>
+    <textarea
+      name="rejectComment"
+      rows="3"
+      style="width: 100%; box-sizing: border-box"
+    ></textarea>
+    <!-- 申請時コメント -->
+    <div class="section-title">申請時コメント</div>
+    <div class="request-comment-outer">
+      <div class="request-comment-content">
+        ご承認のほどよろしくお願いいたします。
+      </div>
+    </div>
+    <div class="section-title">確認対象一覧</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 40%">ファイル名</th>
+          <th style="width: 60%">説明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <span
+              class="file-link"
+              onclick="downloadResultFile('仕訳結果データ1.xlsx')"
+              >仕訳結果データ1.xlsx</span
+            >
+          </td>
+          <td>ファイルの説明1</td>
+        </tr>
+        <tr>
+          <td>
+            <span
+              class="file-link"
+              onclick="downloadResultFile('仕訳結果データ2.xlsx')"
+              >仕訳結果データ2.xlsx</span
+            >
+          </td>
+          <td>ファイルの説明2</td>
+        </tr>
+        <tr>
+          <td>
+            <span
+              class="file-link"
+              onclick="downloadResultFile('仕訳結果データ3.xlsx')"
+              >仕訳結果データ3.xlsx</span
+            >
+          </td>
+          <td>ファイルの説明3</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="section-title">確認に使うエビデンス一覧</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 40%">ファイル名</th>
+          <th style="width: 60%">説明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <span
+              class="file-link"
+              onclick="downloadEvidenceFile('エビデンスデータ1.xlsx')"
+              >エビデンスデータ1.xlsx</span
+            >
+          </td>
+          <td>ファイルの説明1</td>
+        </tr>
+        <tr>
+          <td>
+            <span
+              class="file-link"
+              onclick="downloadEvidenceFile('エビデンスデータ2.xlsx')"
+              >エビデンスデータ2.xlsx</span
+            >
+          </td>
+          <td>ファイルの説明2</td>
+        </tr>
+        <tr>
+          <td>
+            <span
+              class="file-link"
+              onclick="downloadEvidenceFile('エビデンスデータ3.xlsx')"
+              >エビデンスデータ3.xlsx</span
+            >
+          </td>
+          <td>ファイルの説明3</td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- ★小林修正★ END -->
+  </body>
+</html>

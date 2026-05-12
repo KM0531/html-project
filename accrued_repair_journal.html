@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>未払修繕費仕訳計上システム</title>
+    <!-- 小林修正★ START -->
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <!-- 小林修正★ END -->
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #f4f4f4;
+        margin: 0;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      /* ★ボタンエリア追加 */
+      .top-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .action-btn {
+        padding: 6px 14px;
+        border: 1px solid #222;
+        background: #fff;
+        cursor: pointer;
+      }
+
+      .primary {
+        background: #222;
+        color: #fff;
+      }
+
+      /* タイトル */
+      .title {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      /* テーブル */
+      .table {
+        border: 1px solid #ccc;
+        background: #fff;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #ddd;
+      }
+      .row:last-child {
+        border-bottom: none;
+      }
+
+      .header-title {
+        background: #fff;
+        border-bottom: 2px solid #222;
+        padding: 14px 24px;
+        font-weight: bold;
+      }
+
+      .cell {
+        padding: 10px;
+        display: flex;
+        align-items: center;
+      }
+      .cell:nth-child(1) {
+        flex: 2;
+      }
+      .cell:nth-child(2) {
+        flex: 1;
+      }
+      .cell:nth-child(3) {
+        flex: 1;
+      }
+
+      .cell:not(:last-child) {
+        border-right: 1px solid #ddd;
+      }
+
+      .cell > * {
+        margin: 0 auto;
+      }
+
+      button {
+        height: 32px;
+        width: 120px;
+        padding: 0 12px;
+        cursor: pointer;
+      }
+
+      .status {
+        height: 32px;
+        width: 80%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 12px;
+      }
+
+      .gray {
+        background: #777;
+      }
+      .orange {
+        background: #f39c12;
+      }
+      .green {
+        background: #27ae60;
+      }
+      .red {
+        background: #c0392b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header-title">経理部業務管理システム</div>
+    <div class="container">
+      <!-- ★追加：戻る・保存 -->
+      <div class="top-actions">
+        <button class="action-btn" onclick="goBack()">← 戻る</button>
+        <!-- ★小林修正★ START -->
+        <!-- <button class="action-btn primary" onclick="save()">一時保存</button> -->
+        <!-- ★小林修正★ END -->
+      </div>
+
+      <div class="title">未払修繕費仕訳計上業務</div>
+
+      <div>業務フロー整理後、処理概要を記載予定</div>
+
+      <br /><br />
+
+      <div class="table" id="table"></div>
+    </div>
+
+    <script>
+      const tasks = [
+        { name: "データ取込", file: "child_import.html" },
+        { name: "計算", file: "child_aggregate.html" },
+        { name: "仕訳算出", file: "child_calc.html" },
+        { name: "確認", file: "child_approve.html" },
+      ];
+
+      const statusList = ["未実施", "実行中", "完了", "差戻"];
+      const statusClass = ["gray", "orange", "green", "red"];
+
+      tasks.forEach((t) => (t.status = 0));
+
+      const table = document.getElementById("table");
+
+      function render() {
+        table.innerHTML = "";
+
+        const header = document.createElement("div");
+        header.className = "row header";
+        header.innerHTML = `
+    <div class="cell">業務</div>
+    <div class="cell">ステータス</div>
+    <div class="cell">詳細</div>
+  `;
+        table.appendChild(header);
+
+        tasks.forEach((t, i) => {
+          const row = document.createElement("div");
+          row.className = "row";
+
+          row.innerHTML = `
+      <div class="cell">
+        <button onclick="run(${i})">${t.name}</button>
+      </div>
+      <div class="cell">
+        <div class="status ${statusClass[t.status]}">${statusList[t.status]}</div>
+      </div>
+      <div class="cell">
+        <button onclick="openDetail('${t.file}')">詳細</button>
+      </div>
+    `;
+
+          table.appendChild(row);
+        });
+      }
+
+      function run(index) {
+        if (!confirm("実行しますがよろしいですか？")) return;
+        tasks[index].status = (tasks[index].status + 1) % 4;
+        render();
+      }
+
+      function openDetail(file) {
+        window.open(file, "_blank", "width=1000,height=700");
+      }
+
+      /* ★追加処理 */
+      function goBack() {
+        location.href = "business_select.html";
+      }
+      /* ★小林修正★ START */
+      /*
+      function save() {
+        alert("一時保存しました（モック）");
+      }
+      */
+      /* ★小林修正★ END */
+
+      render();
+    </script>
+  </body>
+</html>

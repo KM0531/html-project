@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>経理部ポータル</title>
+    <!-- 小林修正★ START -->
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <!-- 小林修正★ END -->
+    <style>
+      :root {
+        --sp-blue: #0078d4;
+        --sp-blue-dark: #106ebe;
+        --bg: #f3f2f1;
+        --panel: #fff;
+        --line: #e1dfdd;
+        --text: #323130;
+        --muted: #605e5c;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+      }
+      .topbar {
+        background: var(--sp-blue);
+        color: #fff;
+        padding: 12px 18px;
+        font-weight: 700;
+      }
+      .shell {
+        padding: 16px;
+      }
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: #666;
+      }
+      .btn {
+        border: 1px solid #c8c6c4;
+        background: #fff;
+        padding: 8px 14px;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #333;
+        display: inline-block;
+      }
+      .btn.primary {
+        background: var(--sp-blue);
+        color: #fff;
+        font-weight: 700;
+        border-color: var(--sp-blue);
+      }
+      .btn.sub {
+        background: #106ebe;
+        color: #fff;
+        border-color: #106ebe;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 16px;
+      }
+
+      .filter {
+        display: grid;
+        grid-template-columns: 0.9fr 0.95fr 1.15fr 1.05fr 1fr 1fr 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+      }
+      .filter-field label {
+        font-size: 11px;
+        color: #666;
+        font-weight: 700;
+        line-height: 1;
+      }
+      .filter-field select,
+      .filter-field input {
+        width: 100%;
+        padding: 7px 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        min-width: 0;
+      }
+
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fff;
+      }
+
+      table {
+        width: 100%;
+        min-width: 1200px;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+
+      col.col-important {
+        width: 70px;
+      }
+      col.col-category {
+        width: 110px;
+      }
+      col.col-title {
+        width: 260px;
+      }
+      col.col-user {
+        width: 170px;
+      }
+      col.col-dept {
+        width: 120px;
+      }
+      col.col-start {
+        width: 150px;
+      }
+      col.col-due {
+        width: 150px;
+      }
+      col.col-status {
+        width: 120px;
+      }
+
+      thead th {
+        background: #005b70;
+        color: #fff;
+        padding: 10px 8px;
+        font-size: 12px;
+        position: sticky;
+        top: 0px;
+        z-index: 1;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      tbody td {
+        padding: 8px;
+        border-top: 1px solid #eee;
+        font-size: 12px;
+        vertical-align: middle;
+        word-break: break-word;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      tbody tr:nth-child(odd) {
+        background: #fafafa;
+      }
+      tbody tr:hover {
+        background: #eef6fb;
+      }
+      .center {
+        text-align: center;
+      }
+      .important {
+        color: #d13438;
+        font-weight: 700;
+      }
+      .status {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid #d0d0d0;
+        background: #f8f8f8;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      /* ★小林修正★ START */
+      /*
+      .status.pending {
+        background: #fff8e5;
+        border-color: #f1d9a7;
+        color: #9a6b00;
+      }
+      .status.done {
+        background: #edf7ed;
+        border-color: #b7dfb7;
+        color: #107c10;
+      }
+      .status.back {
+        background: #fde7e9;
+        border-color: #f1bfc5;
+        color: #a80000;
+      }
+      .status.approving {
+        background: #eef6fc;
+        border-color: #c7e0f4;
+        color: #0f4a7a;
+      }
+      */
+      /* ★小林修正★ END */
+      /* 提出 */
+      .category.submission {
+        background: #e1f5ee;
+        border-color: #085041;
+        color: #085041;
+      }
+      /* 承認 */
+      .category.approval {
+        background: #e6f1fb;
+        color: #0c447c;
+      }
+      /* 確認 */
+      .category.confirmation {
+        background: #faeeda;
+        color: #633806;
+      }
+      /* 差し戻し */
+      .category.remand {
+        background: #fcebeb;
+        color: #791f1f;
+      }
+      /* 完了 */
+      .category.completion {
+        background: #3b6d11;
+        color: #ffffff;
+      }
+
+      /* 完了専用：完全に静的表示 */
+      .category-static {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 85px;
+        padding: 4px 8px;
+
+        border: 0.5px solid;
+        border-radius: 4px;
+
+        font-size: 12px;
+        line-height: 1;
+
+        cursor: default;
+        pointer-events: none; /* ← これで完全に“ボタン挙動”消す */
+      }
+
+      @media (max-width: 1100px) {
+        .filter {
+          grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+      }
+      @media (max-width: 720px) {
+        .filter {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .category-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 85px;
+        border: 0.5px solid;
+        background: #eef6fc;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .overdue {
+        color: #d13438;
+        font-weight: 700;
+      }
+      .dropdown-check {
+        position: relative;
+        min-width: 0;
+      }
+
+      .dropdown-check-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        width: 100%;
+        padding: 7px 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background: #fff;
+        font-size: 13px;
+        cursor: pointer;
+        color: #323130;
+        line-height: 1.4;
+        min-height: 34px;
+        box-sizing: border-box;
+      }
+
+      .dropdown-check-trigger .badge {
+        background: #0078d4;
+        color: #fff;
+        font-size: 10px;
+        padding: 1px 5px;
+        border-radius: 999px;
+        font-weight: 700;
+      }
+
+      .dropdown-check-list {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 100;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        min-width: 100%;
+        white-space: nowrap;
+      }
+
+      .dropdown-check-list.open {
+        display: block;
+      }
+
+      .dropdown-check-list label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        color: #323130;
+        font-weight: 400;
+      }
+
+      .dropdown-check-list input[type="checkbox"] {
+        width: 13px;
+        height: 13px;
+        margin: 0;
+        flex-shrink: 0;
+      }
+
+      .dropdown-check-list label:hover {
+        background: #f3f2f1;
+      }
+
+      .dropdown-check-list label.all-label {
+        border-bottom: 1px solid #eee;
+        font-weight: 700;
+      }
+
+      .filter-field select,
+      .filter-field input,
+      .dropdown-check-trigger {
+        height: 34px;
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">経理部ポータル</div>
+
+    <div class="shell">
+      <div class="controls">
+        <div id="deptLabel">ログイン部店：経理部</div>
+        <div
+          style="
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+          "
+        >
+          <a class="btn primary" id="mainBtn" href="login.html" target="_blank"
+            >経理業務管理システム</a
+          >
+          <a class="btn primary" href="sp_file_request.html">依頼画面</a>
+          <a class="btn primary" href="manage_department_master.html"
+            >部署マスタ管理画面</a
+          >
+        </div>
+      </div>
+
+      <div class="layout">
+        <div class="card">
+          <div class="filter">
+            <div class="filter-field">
+              <label>重要</label>
+              <select id="fImportant">
+                <option value="all">すべて</option>
+                <option value="important">重要のみ</option>
+                <option value="normal">通常のみ</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label>ステータス</label>
+              <div class="dropdown-check">
+                <button
+                  type="button"
+                  class="dropdown-check-trigger"
+                  id="fCategoryTrigger"
+                  onclick="toggleCategoryDropdown()"
+                >
+                  <span id="fCategoryLabel">すべて</span>
+                  <span
+                    class="badge"
+                    id="fCategoryBadge"
+                    style="display: none"
+                  ></span>
+                  <span>▼</span>
+                </button>
+                <div class="dropdown-check-list" id="fCategoryList">
+                  <label class="all-label">
+                    <input
+                      type="checkbox"
+                      id="chkAll"
+                      checked
+                      onchange="onAllChange()"
+                    />
+                    すべて
+                  </label>
+                  <label
+                    ><input
+                      type="checkbox"
+                      class="chkCategory"
+                      value="提出"
+                      checked
+                      onchange="onCategoryChange()"
+                    />提出</label
+                  >
+                  <label
+                    ><input
+                      type="checkbox"
+                      class="chkCategory"
+                      value="差し戻し"
+                      checked
+                      onchange="onCategoryChange()"
+                    />差し戻し</label
+                  >
+                  <label
+                    ><input
+                      type="checkbox"
+                      class="chkCategory"
+                      value="承認"
+                      checked
+                      onchange="onCategoryChange()"
+                    />承認</label
+                  >
+                  <label
+                    ><input
+                      type="checkbox"
+                      class="chkCategory"
+                      value="確認"
+                      checked
+                      onchange="onCategoryChange()"
+                    />確認</label
+                  >
+                  <label
+                    ><input
+                      type="checkbox"
+                      class="chkCategory"
+                      value="完了"
+                      checked
+                      onchange="onCategoryChange()"
+                    />完了</label
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="filter-field">
+              <label>タイトル</label>
+              <input id="fTitle" type="text" placeholder="タイトルで検索" />
+            </div>
+            <div class="filter-field">
+              <label>依頼者</label>
+              <input id="fUser" type="text" placeholder="依頼者で検索" />
+            </div>
+            <div class="filter-field">
+              <label>対応部署</label>
+              <select id="fDept">
+                <option value="all">すべて</option>
+                <option>経理部</option>
+                <option>営業部</option>
+                <option>管理部</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label>開始日時</label>
+              <input id="fStart" type="text" placeholder="例: 2026/04/23" />
+            </div>
+            <div class="filter-field">
+              <label>期限日時</label>
+              <input id="fDue" type="text" placeholder="例: 2026/04/24" />
+            </div>
+            <!-- ★小林修正★ START -->
+            <!--
+            <div class="filter-field">
+              <label>ステータス</label>
+              <select id="fStatus">
+                <option value="all">すべて</option>
+                <option>未対応</option>
+                <option>要修正</option>
+                <option>確認待ち</option>
+                <option>対応済</option>
+                <option>完了</option>
+              </select>
+            </div>
+            -->
+            <!-- ★小林修正★ END -->
+          </div>
+
+          <div class="summary-row">
+            <div>表示件数：<strong id="resultCount">0</strong></div>
+            <div id="deptHint"></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <colgroup>
+                <col class="col-important" />
+                <col class="col-category" />
+                <col class="col-title" />
+                <col class="col-user" />
+                <col class="col-dept" />
+                <col class="col-start" />
+                <col class="col-due" />
+                <!-- ★小林修正★ START -->
+                <!-- <col class="col-status" /> -->
+                <!-- ★小林修正★ END -->
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>重要</th>
+                  <th>ステータス</th>
+                  <th>タイトル</th>
+                  <th>依頼者</th>
+                  <th>対応部署</th>
+                  <th>開始日時</th>
+                  <th>期限日時</th>
+                  <!-- ★小林修正★ START -->
+                  <!-- <th>ステータス</th> -->
+                  <!-- ★小林修正★ END -->
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* ★小林修正★ START */
+      function getToday() {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+      }
+
+      function addDays(baseDate, diff) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + diff);
+        return d;
+      }
+
+      function formatDate(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}/${m}/${d}`;
+      }
+
+      // テスト用日付
+      const TODAY = formatDate(getToday());
+      const INTHREEDAYS = formatDate(addDays(getToday(), 3));
+      const records = [
+        {
+          important: true,
+          category: "提出",
+          title: "月次提出案件1",
+          user: "山本",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/10 09:00",
+          due: TODAY + " 17:00",
+          // status: "未対応",
+        },
+        {
+          important: false,
+          category: "承認",
+          title: "サンプル案件2",
+          user: "佐藤",
+          role: "課長",
+          dept: "営業部",
+          start: "2026/04/11 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "対応済",
+        },
+        {
+          important: false,
+          category: "確認",
+          title: "サンプル案件3",
+          user: "高橋",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/12 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "確認待ち",
+        },
+        {
+          important: false,
+          category: "差し戻し",
+          title: "サンプル案件4",
+          user: "鈴木",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/13 09:00",
+          due: TODAY + " 17:00",
+          // status: "対応済",
+        },
+        {
+          important: true,
+          category: "完了",
+          title: "サンプル案件5",
+          user: "田中",
+          role: "課長",
+          dept: "営業部",
+          start: "2026/04/14 09:00",
+          due: TODAY + " 17:00",
+          // status: "要修正",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "月次確認案件6",
+          user: "山本",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/15 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "確認待ち",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件7",
+          user: "佐藤",
+          role: "課長",
+          dept: "営業部",
+          start: "2026/04/16 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "対応済",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件8",
+          user: "高橋",
+          role: "部長",
+          dept: "管理部",
+          start: "2026/04/17 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "要修正",
+        },
+        {
+          important: true,
+          category: "提出",
+          title: "サンプル案件9",
+          user: "鈴木",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/18 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "完了",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件10",
+          user: "田中",
+          role: "課長",
+          dept: "営業部",
+          start: "2026/04/19 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "未対応",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "月次差し戻し案件11",
+          user: "山本",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/20 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "要修正",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件12",
+          user: "佐藤",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/21 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "完了",
+        },
+        {
+          important: true,
+          category: "提出",
+          title: "サンプル案件13",
+          user: "高橋",
+          role: "部長",
+          dept: "管理部",
+          start: "2026/04/22 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "未対応",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件14",
+          user: "鈴木",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/23 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "対応済",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件15",
+          user: "田中",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/24 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "確認待ち",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "月次提出案件16",
+          user: "山本",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/25 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "未対応",
+        },
+        {
+          important: true,
+          category: "提出",
+          title: "サンプル案件17",
+          user: "佐藤",
+          role: "課長",
+          dept: "営業部",
+          start: "2026/04/26 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "対応済",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件18",
+          user: "高橋",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/27 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "確認待ち",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件19",
+          user: "鈴木",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/28 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "対応済",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件20",
+          user: "田中",
+          role: "課長",
+          dept: "営業部",
+          start: "2026/04/29 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "要修正",
+        },
+        {
+          important: true,
+          category: "提出",
+          title: "月次確認案件21",
+          user: "山本",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/30 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "確認待ち",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件22",
+          user: "佐藤",
+          role: "課長",
+          dept: "営業部",
+          start: "2026/04/31 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "対応済",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件23",
+          user: "高橋",
+          role: "部長",
+          dept: "管理部",
+          start: "2026/04/32 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "要修正",
+        },
+        {
+          important: false,
+          category: "提出",
+          title: "サンプル案件24",
+          user: "鈴木",
+          role: "",
+          dept: "経理部",
+          start: "2026/04/33 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "完了",
+        },
+        {
+          important: true,
+          category: "提出",
+          title: "サンプル案件25",
+          user: "田中",
+          role: "課長",
+          dept: "営業部",
+          start: "2026/04/34 09:00",
+          due: INTHREEDAYS + " 17:00",
+          // status: "未対応",
+        },
+      ];
+      /* ★小林修正★ END */
+
+      function getDept() {
+        return localStorage.getItem("dept") || "経理部";
+      }
+
+      function getFilters() {
+        return {
+          important: document.getElementById("fImportant").value,
+          category: Array.from(
+            document.querySelectorAll(".chkCategory:checked"),
+          ).map((el) => el.value),
+          title: document.getElementById("fTitle").value.trim().toLowerCase(),
+          user: document.getElementById("fUser").value.trim().toLowerCase(),
+          dept: document.getElementById("fDept").value,
+          start: document.getElementById("fStart").value.trim(),
+          due: document.getElementById("fDue").value.trim(),
+        };
+      }
+
+      function matchRecord(record, filters) {
+        if (filters.important === "important" && !record.important)
+          return false;
+        if (filters.important === "normal" && record.important) return false;
+        if (filters.category.length === 0) return false;
+        if (!filters.category.includes(record.category)) return false;
+        if (filters.dept !== "all" && record.dept !== filters.dept)
+          return false;
+        if (
+          filters.title &&
+          !record.title.toLowerCase().includes(filters.title)
+        )
+          return false;
+        if (
+          filters.user &&
+          !(
+            record.dept +
+            record.user +
+            (record.role ? "（" + record.role + "）" : "")
+          )
+            .toLowerCase()
+            .includes(filters.user)
+        )
+          return false;
+        if (filters.start && !record.start.includes(filters.start))
+          return false;
+        if (filters.due && !record.due.includes(filters.due)) return false;
+        return true;
+      }
+      /* ★小林修正★ START */
+      function categoryClass(category) {
+        if (category === "提出") return "submission";
+        if (category === "承認") return "approval";
+        if (category === "確認") return "confirmation";
+        if (category === "差し戻し") return "remand";
+        if (category === "完了") return "completion";
+        return "";
+      }
+      /*
+      function statusClass(status) {
+        if (status === "未対応") return "pending";
+        if (status === "対応済" || status === "完了") return "done";
+        if (status === "要修正") return "back";
+        if (status === "確認待ち") return "approving";
+        return "";
+      }
+      */
+      /* ★小林修正★ END */
+
+      function render() {
+        const filters = getFilters();
+        const filtered = records.filter((r) => matchRecord(r, filters));
+
+        const tbody = document.getElementById("tbody");
+        tbody.innerHTML = "";
+
+        filtered.forEach((d) => {
+          const tr = document.createElement("tr");
+          let requester;
+          if (d.category === "確認") {
+            requester =
+              "経理部" + d.user + (d.role ? "（" + d.role + "）" : "");
+          } else {
+            requester = d.dept + d.user + (d.role ? "（" + d.role + "）" : "");
+          }
+          /* ★小林修正★ START */
+          const cls = categoryClass(d.category);
+          const isLate = isOverdue(d.due);
+          tr.innerHTML = `
+      <td class="center">${d.important ? '<span class="important">!</span>' : ""}</td>
+      <td>
+        ${
+          d.category === "完了"
+            ? `<div class="category-static category ${cls}">${d.category}</div>`
+            : `<button class="category-btn category ${cls}" onclick="handleCategory('${d.category}')">${d.category}</button>`
+        }
+      </td>
+      <td>${d.title}</td>
+      <td>${requester}</td>
+      <td>${d.dept}</td>
+      <td>${d.start}</td>
+      <td class="${isLate && d.category !== "完了" ? "overdue" : ""}">${d.due}</td>
+        `;
+          /* ★小林修正★ END */
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById("resultCount").textContent = String(
+          filtered.length,
+        );
+      }
+
+      function applyDept() {
+        const dept = getDept();
+        document.getElementById("deptLabel").innerText =
+          "ログイン部店：" + dept;
+        document.getElementById("deptHint").innerText =
+          dept === "経理部" ? "経理部表示" : "経理部以外表示";
+
+        if (dept !== "経理部") {
+          document.getElementById("mainBtn").style.display = "none";
+        }
+      }
+
+      document
+        .querySelectorAll("input,select")
+        .forEach((el) => el.addEventListener("input", render));
+      render();
+      applyDept();
+
+      function handleCategory(category) {
+        if (category === "提出") {
+          location.href = "sp_file_submit.html";
+        } else if (category === "差し戻し") {
+          location.href = "sp_file_reject.html";
+        } else if (category === "承認") {
+          location.href = "sp_file_submit_manager.html";
+        } else if (category === "確認") {
+          location.href = "sp_file_submit_keiri.html";
+        }
+      }
+
+      function isOverdue(dateStr) {
+        // "2026/04/10 09:00" → Date変換
+        const normalized = dateStr.replace(/\//g, "-");
+        const dueDate = new Date(normalized);
+        const now = new Date();
+        // 時刻を切り捨て
+        dueDate.setHours(0, 0, 0, 0);
+        now.setHours(0, 0, 0, 0);
+        return dueDate <= now;
+      }
+
+      function toggleCategoryDropdown() {
+        document.getElementById("fCategoryList").classList.toggle("open");
+      }
+
+      document.addEventListener("click", function (e) {
+        const dropdown = document.querySelector(".dropdown-check");
+        if (!dropdown.contains(e.target)) {
+          document.getElementById("fCategoryList").classList.remove("open");
+        }
+      });
+
+      function onAllChange() {
+        const checked = document.getElementById("chkAll").checked;
+        document
+          .querySelectorAll(".chkCategory")
+          .forEach((el) => (el.checked = checked));
+        updateCategoryLabel();
+        render();
+      }
+
+      function onCategoryChange() {
+        const all = document.querySelectorAll(".chkCategory");
+        const checked = document.querySelectorAll(".chkCategory:checked");
+        document.getElementById("chkAll").checked =
+          all.length === checked.length;
+        updateCategoryLabel();
+        render();
+      }
+
+      function updateCategoryLabel() {
+        const all = document.querySelectorAll(".chkCategory");
+        const checked = document.querySelectorAll(".chkCategory:checked");
+        const label = document.getElementById("fCategoryLabel");
+        const badge = document.getElementById("fCategoryBadge");
+        if (checked.length === all.length || checked.length === 0) {
+          label.textContent = "すべて";
+          badge.style.display = "none";
+        } else {
+          label.textContent = checked.length + "件選択中";
+          badge.textContent = checked.length;
+          badge.style.display = "";
+        }
+      }
+    </script>
+  </body>
+</html>

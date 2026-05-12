@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ファイル提出（差し戻し）</title>
+    <!-- 小林修正★ START -->
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <!-- 小林修正★ END -->
+    <style>
+      body {
+        font-family: "Segoe UI";
+        background: #f3f2f1;
+        margin: 0;
+      }
+      .topbar {
+        background: #0078d4;
+        color: #fff;
+        padding: 12px 18px;
+        font-weight: bold;
+      }
+      .container {
+        padding: 20px;
+      }
+      .card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 900px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        position: relative;
+      }
+      .row {
+        margin-bottom: 10px;
+      }
+      .label {
+        font-size: 12px;
+        color: #666;
+      }
+      .value {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .reject-box {
+        background: #fde7e9;
+        border-left: 4px solid #d13438;
+        padding: 12px;
+        margin-top: 16px;
+        margin-bottom: 16px;
+      }
+      .file {
+        margin: 12px 0;
+      }
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .sub {
+        background: #fff;
+        border: 1px solid #ccc;
+      }
+      /* ★小林修正★ START */
+
+      /* 右上ボタン */
+      .actions-top {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+      }
+
+      .primary {
+        background: #0078d4;
+        color: #fff;
+      }
+
+      /* ===== 添付ファイル表示 ===== */
+
+      .file-count {
+        margin-top: 8px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .file-list {
+        font-size: 12px;
+        margin-top: 6px;
+        border: 1px solid #333;
+        padding: 4px;
+        background: #fafafa;
+        margin-bottom: 10px;
+      }
+
+      .file-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .file-item:last-child {
+        border-bottom: none;
+      }
+
+      .evidence-count {
+        margin-top: 8px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .evidence-list {
+        font-size: 12px;
+        margin-top: 6px;
+        border: 1px solid #333;
+        padding: 4px;
+        background: #fafafa;
+        margin-bottom: 10px;
+      }
+
+      .evidence-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .evidence-item:last-child {
+        border-bottom: none;
+      }
+
+      .delete-btn {
+        background: #e74c3c;
+        color: white;
+        border: none;
+        padding: 2px 8px;
+        cursor: pointer;
+        border-radius: 3px;
+        font-size: 11px;
+      }
+
+      .delete-btn:hover {
+        background: #c0392b;
+      }
+
+      .drop-zone {
+        border: 2px dashed #0078d4;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        background: #f9fbfd;
+        margin-bottom: 10px;
+      }
+
+      .drop-zone.dragover {
+        background: #e6f2ff;
+        border-color: #005fa3;
+      }
+
+      .section {
+        margin-top: 24px;
+      }
+
+      .section-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+        border-left: 4px solid #0078d4;
+        padding-left: 8px;
+      }
+
+      textarea {
+        width: 100%;
+        height: 80px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        padding: 8px;
+        font-size: 13px;
+        resize: vertical;
+      }
+
+      .flow-grid {
+        display: grid;
+        grid-template-columns: repeat(3, max-content);
+        gap: 8px;
+        justify-content: start;
+      }
+
+      /* ===== グループ（上段） ===== */
+      .group {
+        position: relative;
+        height: 30px;
+        text-align: center;
+      }
+
+      /* カッコ（∩） */
+      .group::before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 7px;
+        border-top: 2px solid;
+        border-left: 2px solid;
+        border-right: 2px solid;
+      }
+
+      /* 部署名 */
+      .group::after {
+        content: attr(data-dept);
+        position: absolute;
+        transform: translateX(-50%);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      /* ===== ステップ（下段） ===== */
+      .step {
+        padding: 8px 18px;
+        background: #ddd;
+        text-align: center;
+        font-size: 12px;
+        clip-path: polygon(0 0, 85% 0, 100% 50%, 85% 100%, 0 100%);
+        cursor: pointer;
+      }
+
+      .step.active {
+        background: #27ae60;
+        color: #fff;
+      }
+
+      .todo-area {
+        margin-top: 16px;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fafafa;
+      }
+
+      .todo-content ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+      /* ★小林修正★ END */
+    </style>
+  </head>
+
+  <body>
+    <div class="topbar">経理部ポータル</div>
+
+    <div class="container">
+      <button class="btn sub" onclick="location.href = 'sp_main.html'">
+        ← 戻る
+      </button>
+
+      <div class="card">
+        <!-- 右上 -->
+        <div class="actions-top">
+          <button class="btn primary" onclick="submit()">提出</button>
+        </div>
+
+        <h3>ファイル提出</h3>
+        <!-- ★矢羽根：タイトル直下 -->
+        <div class="flow-grid">
+          <!-- グループ（2ステップ分） -->
+          <div
+            class="group"
+            style="grid-column: span 2"
+            data-dept="営業部"
+          ></div>
+
+          <!-- グループ（1ステップ） -->
+          <div
+            class="group"
+            style="grid-column: span 1"
+            data-dept="経理部"
+          ></div>
+
+          <!-- ステップ行 -->
+          <div class="step active" data-status="submit">提出</div>
+          <div class="step" data-status="approve">承認</div>
+          <div class="step" data-status="check">確認</div>
+        </div>
+        <!-- TODO表示エリア -->
+        <div id="todoArea" class="todo-area" style="display: none">
+          <div id="todoTitle" class="section-title">TODO</div>
+
+          <div class="todo-content" data-status="submit">
+            <ul>
+              <li>提出ファイルを添付する</li>
+              <li>コメントを入力する</li>
+              <li>内容を確認して提出する</li>
+            </ul>
+          </div>
+
+          <div class="todo-content" data-status="approve" style="display: none">
+            <ul>
+              <li>提出内容を確認する</li>
+              <li>不足資料がないか確認する</li>
+              <li>承認可否を判断する</li>
+            </ul>
+          </div>
+
+          <div class="todo-content" data-status="check" style="display: none">
+            <ul>
+              <li>最終確認を行う</li>
+              <li>仕訳結果を確認する</li>
+              <li>処理完了を確認する</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="reject-box">
+          <div class="row">
+            <div class="label">差し戻し者</div>
+            <div class="value">経理部 佐藤</div>
+          </div>
+          <div class="row">
+            <div class="label">差し戻し日</div>
+            <div class="value">2026/04/25</div>
+          </div>
+          <div class="row">
+            <div class="label">差し戻し理由</div>
+            <div class="value">ファイル名が規則と一致していません</div>
+          </div>
+        </div>
+
+        <!-- ★小林修正★ START -->
+        <!-- 基本情報 -->
+        <div class="section">
+          <div class="section-title">基本情報</div>
+          <div class="info-grid">
+            <div class="label">タイトル</div>
+            <div class="value" id="title"></div>
+
+            <div class="label">依頼内容</div>
+            <div class="value" id="contents"></div>
+
+            <div class="label">対象ファイル</div>
+            <div class="value" id="targetFileName"></div>
+
+            <div class="label">依頼者</div>
+            <div class="value" id="user"></div>
+
+            <div class="label">期限</div>
+            <div class="value" id="due"></div>
+          </div>
+        </div>
+
+        <!-- 提出ファイル -->
+        <div class="section">
+          <div class="section-title">提出ファイル</div>
+          <div id="dropZoneFiles" class="drop-zone">
+            ここにファイルをドラッグ＆ドロップ<br />
+            またはクリックして選択
+            <input type="file" id="fileInput" multiple hidden />
+          </div>
+          <div id="fileCount">添付ファイル：0件</div>
+          <div id="fileList" class="file-list">
+            ファイルが選択されていません
+          </div>
+        </div>
+
+        <!-- エビデンス -->
+        <div class="section">
+          <div class="section-title">エビデンス</div>
+          <div id="dropZoneEvidence" class="drop-zone">
+            ここにエビデンスをドラッグ＆ドロップ<br />
+            またはクリックして選択
+            <input type="file" id="evidenceInput" multiple hidden />
+          </div>
+          <div id="evidenceCount">添付エビデンス：0件</div>
+          <div id="evidenceList" class="evidence-list">
+            エビデンスが選択されていません
+          </div>
+        </div>
+        <!-- ★小林修正★ END -->
+        <!-- コメント -->
+        <div class="section">
+          <div class="section-title">提出コメント</div>
+          <textarea
+            id="comment"
+            placeholder="補足事項や注意点があれば記載してください"
+          ></textarea>
+        </div>
+
+        <!-- 履歴 -->
+        <div id="historySection" class="section" style="display: none">
+          <div class="section-title">履歴</div>
+          <div id="historyList"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ★小林修正★ START
+      let selectedFiles = [];
+      let selectedEvidence = [];
+      const record = JSON.parse(localStorage.getItem("record") || "{}");
+
+      document.getElementById("title").innerText =
+        record.title || "未払修繕費仕訳計上業務";
+      document.getElementById("contents").innerText =
+        record.contents || "資料提出をお願いします";
+      const targetFiles = record.targetFileName
+        ? record.targetFileName.split(",")
+        : ["総勘定元帳.xlsx"];
+      document.getElementById("targetFileName").innerText =
+        targetFiles.join(", ");
+      document.getElementById("user").innerText = record.user || "山田一郎";
+      document.getElementById("due").innerText = record.due || "2026/04/25";
+      // 添付ファイル一覧表示
+      function renderFileList() {
+        const list = document.getElementById("fileList");
+
+        const count = document.getElementById("fileCount");
+
+        list.innerHTML = "";
+
+        count.innerText = "添付ファイル：" + selectedFiles.length + "件";
+
+        if (selectedFiles.length === 0) {
+          list.innerHTML = "ファイルが選択されていません";
+
+          return;
+        }
+
+        selectedFiles.forEach((file, index) => {
+          const div = document.createElement("div");
+
+          div.className = "file-item";
+
+          const nameSpan = document.createElement("span");
+
+          nameSpan.textContent =
+            "・" + file.name + " (" + Math.round(file.size / 1024) + " KB)";
+
+          const deleteBtn = document.createElement("button");
+
+          deleteBtn.className = "delete-btn";
+
+          deleteBtn.textContent = "削除";
+
+          deleteBtn.onclick = () => deleteFile(index);
+
+          div.appendChild(nameSpan);
+          div.appendChild(deleteBtn);
+
+          list.appendChild(div);
+        });
+      }
+      // 添付ファイル削除
+      function deleteFile(index) {
+        selectedFiles.splice(index, 1);
+
+        renderFileList();
+      }
+      // 添付エビデンス一覧表示
+      function renderEvidenceList() {
+        const list = document.getElementById("evidenceList");
+
+        const count = document.getElementById("evidenceCount");
+
+        list.innerHTML = "";
+
+        count.innerText = "添付エビデンス：" + selectedEvidence.length + "件";
+
+        if (selectedEvidence.length === 0) {
+          list.innerHTML = "エビデンスが選択されていません";
+
+          return;
+        }
+
+        selectedEvidence.forEach((file, index) => {
+          const div = document.createElement("div");
+
+          div.className = "evidence-item";
+
+          const nameSpan = document.createElement("span");
+
+          nameSpan.textContent =
+            "・" + file.name + " (" + Math.round(file.size / 1024) + " KB)";
+
+          const deleteBtn = document.createElement("button");
+
+          deleteBtn.className = "delete-btn";
+
+          deleteBtn.textContent = "削除";
+
+          deleteBtn.onclick = () => deleteEvidence(index);
+
+          div.appendChild(nameSpan);
+          div.appendChild(deleteBtn);
+
+          list.appendChild(div);
+        });
+      }
+      // 添付エビデンス削除
+      function deleteEvidence(index) {
+        selectedEvidence.splice(index, 1);
+
+        renderEvidenceList();
+      }
+
+      /* ===== 履歴 ===== */
+      function addHistory(action, user, comment = "") {
+        const section = document.getElementById("historySection");
+        const list = document.getElementById("historyList");
+
+        section.style.display = "block";
+
+        const div = document.createElement("div");
+        div.className = "history-item";
+
+        div.innerHTML = `
+    <div>${action}（${new Date().toLocaleString()}） ${user}</div>
+    ${comment ? `<div style="color:#666; font-size:12px;">コメント：${comment}</div>` : ""}
+  `;
+
+        list.prepend(div);
+      }
+
+      function submit() {
+        if (selectedFiles.length === 0) {
+          alert("提出ファイルを添付してください");
+          return;
+        }
+
+        const comment = document.getElementById("comment").value.trim();
+
+        const uploadedNames = selectedFiles.map((f) => f.name.toLowerCase());
+        const expected = targetFiles.map((f) => f.toLowerCase());
+
+        const missing = expected.filter(
+          (e) => !uploadedNames.some((u) => u.includes(e.replace(".xlsx", ""))),
+        );
+
+        if (missing.length > 0) {
+          alert("不足ファイル:\n" + missing.join("\n"));
+          return;
+        }
+
+        if (selectedFiles.length !== expected.length) {
+          alert("ファイル件数が一致しません");
+          return;
+        }
+
+        // ★履歴にコメントを含める
+        addHistory("提出", "山田一郎", comment);
+
+        location.href = "sp_main.html";
+      }
+      /* ★小林修正★ START */
+      /* ===== 共通Drop処理 ===== */
+      function setupDropZone(dropZoneId, inputId, targetArray, renderFunc) {
+        const dropZone = document.getElementById(dropZoneId);
+        const input = document.getElementById(inputId);
+
+        /* クリックでファイル選択 */
+        dropZone.addEventListener("click", () => input.click());
+
+        /* input選択 */
+        input.addEventListener("change", () => {
+          targetArray.push(...input.files);
+          input.value = "";
+          renderFunc();
+        });
+
+        /* ドラッグ中 */
+        dropZone.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          dropZone.classList.add("dragover");
+        });
+
+        /* 離脱 */
+        dropZone.addEventListener("dragleave", () => {
+          dropZone.classList.remove("dragover");
+        });
+
+        /* ドロップ */
+        dropZone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          dropZone.classList.remove("dragover");
+
+          const files = Array.from(e.dataTransfer.files);
+          targetArray.push(...files);
+          renderFunc();
+        });
+      }
+      setupDropZone(
+        "dropZoneFiles",
+        "fileInput",
+        selectedFiles,
+        renderFileList,
+      );
+      setupDropZone(
+        "dropZoneEvidence",
+        "evidenceInput",
+        selectedEvidence,
+        renderEvidenceList,
+      );
+      /* ===== TODO表示切替 ===== */
+
+      let openedStatus = null;
+
+      document.querySelectorAll(".step").forEach((step) => {
+        step.addEventListener("click", () => {
+          const status = step.dataset.status;
+          const todoArea = document.getElementById("todoArea");
+
+          // 同じステータス押下 → 閉じる
+          if (openedStatus === status) {
+            todoArea.style.display = "none";
+            openedStatus = null;
+            return;
+          }
+
+          // TODO全非表示
+          document.querySelectorAll(".todo-content").forEach((content) => {
+            content.style.display = "none";
+          });
+
+          // 対象TODO表示
+          const target = document.querySelector(
+            `.todo-content[data-status="${status}"]`,
+          );
+
+          if (target) {
+            // タイトル切替
+            const todoTitle = document.getElementById("todoTitle");
+
+            const titleMap = {
+              submit: "提出ステータスでのTODO",
+              approve: "承認ステータスでのTODO",
+              check: "確認ステータスでのTODO",
+            };
+
+            todoTitle.textContent = titleMap[status] || "TODO";
+
+            // TODO表示
+            target.style.display = "block";
+            todoArea.style.display = "block";
+
+            openedStatus = status;
+          }
+        });
+      });
+      /* ★小林修正★ END */
+    </script>
+  </body>
+</html>

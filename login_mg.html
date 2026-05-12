@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>経理部業務管理システム（ログイン）</title>
+    <!-- 小林修正★ START -->
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <!-- 小林修正★ END -->
+    <style>
+      body {
+        font-family: "Meiryo", sans-serif;
+        background: #f4f4f4;
+        margin: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 80px auto;
+        background: #fff;
+        border: 1px solid #ccc;
+        padding: 30px;
+      }
+      h2 {
+        margin-bottom: 20px;
+      }
+      .form-group {
+        margin-bottom: 18px;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+      .buttons {
+        margin-top: 20px;
+      }
+      button {
+        padding: 10px 16px;
+        border: 1px solid #222;
+        background: #fff;
+        cursor: pointer;
+      }
+      .primary {
+        background: #222;
+        color: #fff;
+      }
+      .header {
+        background: #fff;
+        border-bottom: 2px solid #222;
+        padding: 14px 24px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">経理部業務管理システム</div>
+
+    <div class="container">
+      <h2>ログイン情報（確認用）</h2>
+
+      <div class="form-group">
+        <label>利用者ID</label>
+        <input type="text" id="userId" value="keiri_yamada" />
+      </div>
+
+      <div class="form-group">
+        <label>パスワード</label>
+        <input type="password" id="password" />
+      </div>
+
+      <div class="buttons">
+        <button class="primary" onclick="login()">ログイン</button>
+        <button onclick="clearForm()">クリア</button>
+      </div>
+    </div>
+
+    <script>
+      function login() {
+        const userId = document.getElementById("userId").value;
+
+        localStorage.setItem("user", userId);
+        /* ★小林修正★ START */
+        location.href = "business_select.html";
+        /* ★小林修正★ END */
+      }
+
+      function clearForm() {
+        document.getElementById("userId").value = "";
+        document.getElementById("password").value = "";
+      }
+    </script>
+  </body>
+</html>

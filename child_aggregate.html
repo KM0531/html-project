@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <!-- ★小林修正★ START -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- ★小林修正★ END -->
+    <meta charset="UTF-8" />
+    <title>計算結果確認画面</title>
+    <!-- 小林修正★ START -->
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <!-- 小林修正★ END -->
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #f5f7fa;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+
+      h2 {
+        margin-bottom: 20px;
+      }
+
+      .section-title {
+        font-weight: bold;
+        margin: 30px 0 10px;
+        font-size: 18px;
+      }
+
+      /* サマリ */
+      .summary-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .summary-grid.three {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .summary-box {
+        background: #fff;
+        padding: 8px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      }
+
+      .label {
+        font-size: 13px;
+        color: #666;
+      }
+
+      .value {
+        font-size: 22px;
+        font-weight: bold;
+        margin: 8px 0;
+      }
+
+      .sub {
+        font-size: 12px;
+        color: #888;
+      }
+
+      /* テーブル */
+      .table-wrap {
+        background: #fff;
+        padding: 16px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th {
+        background: #f0f3f7;
+        text-align: left;
+        padding: 10px;
+      }
+
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .num {
+        text-align: right;
+        font-family: monospace;
+      }
+
+      tr:hover {
+        background: #f9fbfd;
+      }
+
+      .highlight {
+        background: #fff8e1;
+      }
+
+      .total {
+        font-weight: bold;
+        background: #f3f6fa;
+      }
+
+      /* ステータス */
+      .pill {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+
+      .ok {
+        background: #e0f7e9;
+        color: #1b7f3a;
+      }
+      .warn {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .ng {
+        background: #fdecea;
+        color: #b71c1c;
+      }
+      .info {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+      .done {
+        background: #ede7f6;
+        color: #512da8;
+      }
+
+      /* リンク風 */
+      .linkish {
+        color: #1976d2;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+      /* ★小林修正★ START */
+      .btn {
+        padding: 8px 16px;
+        margin-left: 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .primary {
+        background: #0078d4;
+        color: #fff;
+      }
+
+      .title {
+        font-size: 18px;
+        font-weight: bold;
+      }
+      /* ★小林修正★ END */
+    </style>
+  </head>
+
+  <body>
+    <div class="title">未払修繕費仕訳計上業務&emsp;計算結果確認画面</div>
+    <div class="section-title">サマリ</div>
+    <div class="summary-grid three">
+      <div class="summary-box">
+        <div class="label">入金累計額</div>
+        <div class="value">8,540,000</div>
+      </div>
+      <div class="summary-box">
+        <div class="label">支払累計額</div>
+        <div class="value">6,250,000</div>
+      </div>
+      <div class="summary-box">
+        <div class="label">未払累計額</div>
+        <div class="value">2,290,000</div>
+      </div>
+    </div>
+
+    <!-- ★小林修正★ START -->
+    <div class="section-title">
+      契約単位 明細一覧
+      <button class="btn primary" onclick="exportExcel()">
+        ファイルダウンロード
+      </button>
+    </div>
+    <!-- ★小林修正★ END -->
+    <div class="table-wrap">
+      <!-- ★小林修正★ START -->
+      <table id="contractTable">
+        <!-- ★小林修正★ END -->
+        <thead>
+          <tr>
+            <th>契約番号</th>
+            <th>ユーザー名</th>
+            <th>入金額</th>
+            <th>支払累計額</th>
+            <th>未払額（差額）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A-001</td>
+            <td>山田商事</td>
+            <td class="num">2,500,000</td>
+            <td class="num">1,800,000</td>
+            <td class="num">700,000</td>
+          </tr>
+
+          <tr class="highlight">
+            <td>A-005</td>
+            <td>高橋運輸</td>
+            <td class="num">1,000,000</td>
+            <td class="num">650,000</td>
+            <td class="num">350,000</td>
+          </tr>
+
+          <tr class="total">
+            <td colspan="2">合計</td>
+            <td class="num">8,540,000</td>
+            <td class="num">6,250,000</td>
+            <td class="num">2,290,000</td>
+            <td colspan="4"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- ★小林修正★ START -->
+    <script>
+      function exportExcel() {
+        /* テーブル取得 */
+        const table = document.getElementById("contractTable");
+        /* HTMLテーブル → ワークシート */
+        const worksheet = XLSX.utils.table_to_sheet(table);
+        /* ブック作成 */
+        const workbook = XLSX.utils.book_new();
+        /* シート追加 */
+        XLSX.utils.book_append_sheet(workbook, worksheet, "契約単位 明細一覧");
+        /* ファイル出力 */
+        XLSX.writeFile(workbook, "契約単位 明細一覧.xlsx");
+      }
+    </script>
+    <!-- ★小林修正★ END -->
+  </body>
+</html>

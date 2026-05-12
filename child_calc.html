@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <!-- ★小林修正★ START -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- ★小林修正★ END -->
+    <meta charset="UTF-8" />
+    <title>仕訳算出結果確認画面</title>
+    <!-- 小林修正★ START -->
+    <link rel="icon" href="icons/MHC_favicon.png" />
+    <!-- 小林修正★ END -->
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #f5f7fa;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+
+      h2 {
+        margin-bottom: 20px;
+      }
+
+      .section-title {
+        font-weight: bold;
+        margin: 30px 0 10px;
+        font-size: 18px;
+      }
+
+      /* KPI */
+      .kpi-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+
+      .kpi {
+        background: #fff;
+        padding: 14px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        font-size: 13px;
+        color: #666;
+      }
+
+      .kpi strong {
+        display: block;
+        font-size: 18px;
+        color: #333;
+        margin-top: 4px;
+      }
+
+      /* サマリ */
+      .summary-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .summary-grid.three {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .summary-box {
+        background: #fff;
+        padding: 16px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      }
+
+      .summary-box.alert {
+        border-left: 5px solid #ff9800;
+      }
+
+      .label {
+        font-size: 13px;
+        color: #666;
+      }
+
+      .value {
+        font-size: 22px;
+        font-weight: bold;
+        margin: 8px 0;
+      }
+
+      .sub {
+        font-size: 12px;
+        color: #888;
+      }
+
+      /* テーブル */
+      .table-wrap {
+        background: #fff;
+        padding: 16px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th {
+        background: #f0f3f7;
+        text-align: left;
+        padding: 10px;
+      }
+
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .num {
+        text-align: right;
+        font-family: monospace;
+      }
+
+      tr:hover {
+        background: #f9fbfd;
+      }
+
+      .highlight {
+        background: #fff8e1;
+      }
+
+      .total {
+        font-weight: bold;
+        background: #f3f6fa;
+      }
+
+      .wrap {
+        white-space: normal;
+      }
+
+      /* ステータス */
+      .pill {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+
+      .ok {
+        background: #e0f7e9;
+        color: #1b7f3a;
+      }
+      .warn {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .ng {
+        background: #fdecea;
+        color: #b71c1c;
+      }
+      .done {
+        background: #ede7f6;
+        color: #512da8;
+      }
+
+      .flag {
+        background: #ffe0e0;
+        color: #b71c1c;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+      }
+
+      /* 入力 */
+      input[type="text"] {
+        padding: 4px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        text-align: right;
+        font-family: monospace;
+      }
+
+      /* 注意文 */
+      .note {
+        margin-top: 20px;
+        padding: 12px;
+        background: #fff3cd;
+        border-left: 5px solid #ff9800;
+        font-size: 13px;
+        border-radius: 6px;
+      }
+      /* ★小林修正★ START */
+      .btn {
+        padding: 8px 16px;
+        margin-left: 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .primary {
+        background: #0078d4;
+        color: #fff;
+      }
+
+      .title {
+        font-size: 18px;
+        font-weight: bold;
+      }
+      /* ★小林修正★ END */
+    </style>
+  </head>
+
+  <body>
+    <div class="title">未払修繕費仕訳計上業務&emsp;仕訳算出結果確認画面</div>
+    <div class="section-title">
+      仕訳明細
+      <!-- ★小林修正★ START -->
+      <button class="btn primary" onclick="exportExcel()">
+        ファイルダウンロード
+      </button>
+      <!-- ★小林修正★ END -->
+    </div>
+
+    <div class="table-wrap">
+      <!-- ★小林修正★ START -->
+      <table id="contractTable">
+        <!-- ★小林修正★ END -->
+        <thead>
+          <tr>
+            <th>仕訳名称</th>
+            <th>勘定科目（借方）</th>
+            <th>勘定科目（貸方）</th>
+            <th>計上金額</th>
+            <th>計上部店</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight">
+            <td>動産総合保険金収入</td>
+            <td>動産保険金収入（711060）</td>
+            <td>未払費用その他（409150）</td>
+            <td>5,946,270</td>
+            <td>MHCインシュアランス</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- ★小林修正★ START -->
+    <script>
+      function exportExcel() {
+        /* テーブル取得 */
+        const table = document.getElementById("contractTable");
+        /* HTMLテーブル → ワークシート */
+        const worksheet = XLSX.utils.table_to_sheet(table);
+        /* ブック作成 */
+        const workbook = XLSX.utils.book_new();
+        /* シート追加 */
+        XLSX.utils.book_append_sheet(workbook, worksheet, "仕訳明細");
+        /* ファイル出力 */
+        XLSX.writeFile(workbook, "仕訳明細.xlsx");
+      }
+    </script>
+    <!-- ★小林修正★ END -->
+  </body>
+</html>
