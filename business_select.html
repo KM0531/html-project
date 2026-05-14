@@ -18,6 +18,24 @@
         border-bottom: 2px solid #222;
         padding: 14px 24px;
         font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .header-btn {
+        background: #0078d4;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.2s ease;
+      }
+      .header-btn:hover {
+        background: #106ebe;
       }
       .title {
         font-size: 20px;
@@ -107,7 +125,10 @@
     </style>
   </head>
   <body>
-    <div class="header">経理部業務管理システム</div>
+    <div class="header">
+      <span>経理部業務管理システム</span>
+      <a href="new_master.html" class="header-btn">マスタ管理</a>
+    </div>
     <div class="title">業務一覧画面</div>
 
     <div class="container">
